@@ -51,15 +51,15 @@ func (ds *Database) Getenv() {
 	}
 	ds.User = os.Getenv("DB_USER")
 	if ds.User == "" {
-		ds.User = ""
+		ds.User = "smartpark"
 	}
 	ds.Pass = os.Getenv("DB_PASS")
 	if ds.Pass == "" {
-		ds.Pass = ""
+		ds.Pass = "smartpark"
 	}
 	ds.Database = os.Getenv("DB_DATABASE")
 	if ds.Database == "" {
-		ds.Database = ""
+		ds.Database = "smartpark"
 	}
 }
 

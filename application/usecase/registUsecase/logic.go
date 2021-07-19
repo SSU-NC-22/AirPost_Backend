@@ -2,6 +2,9 @@ package registUsecase
 
 import "github.com/eunnseo/AirPost/application/domain/model"
 
+/**************************************************************/
+/* logic regist usecase                                       */
+/**************************************************************/
 func (ru *registUsecase) GetLogics() ([]model.Logic, error) {
 	return ru.lgr.FindsWithSensorValues()
 }

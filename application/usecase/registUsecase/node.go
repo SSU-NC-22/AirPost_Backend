@@ -5,6 +5,9 @@ import (
 	"github.com/eunnseo/AirPost/application/domain/model"
 )
 
+/**************************************************************/
+/* sink regist usecase                                        */
+/**************************************************************/
 func (ru *registUsecase) GetSinkPageCount(size int) int {
 	return ru.sir.GetPages(size)
 }
@@ -33,6 +36,9 @@ func (ru *registUsecase) UnregistSink(s *model.Sink) error {
 	return ru.sir.Delete(s)
 }
 
+/**************************************************************/
+/* node regist usecase                                        */
+/**************************************************************/
 func (ru *registUsecase) GetNodePageCount(p adapter.Page) int {
 	return ru.ndr.GetPages(p)
 }

@@ -6,6 +6,9 @@ import (
 	"log"
 )
 
+/**************************************************************/
+/* sensor regist usecase                                      */
+/**************************************************************/
 func (ru *registUsecase) GetSensorPageCount(size int) int {
 	return ru.snr.GetPages(size)
 }

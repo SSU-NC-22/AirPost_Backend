@@ -5,6 +5,9 @@ import (
 	"github.com/eunnseo/AirPost/application/domain/model"
 )
 
+/**************************************************************/
+/* actuator regist usecase                                    */
+/**************************************************************/
 func (ru *registUsecase) GetActuatorPageCount(size int) int {
 	return ru.acr.GetPages(size)
 }

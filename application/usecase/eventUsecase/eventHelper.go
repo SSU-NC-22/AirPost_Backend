@@ -20,11 +20,12 @@ func init() {
 	pingClient.SetRetryCount(2).SetRetryWaitTime(100 * time.Millisecond).SetTimeout(500 * time.Millisecond)
 }
 
+// ping response
 func ping(l model.LogicService) error {
 	path := "/ping"
 	url := makeUrl(l.Addr, path)
 
-	resp, _ := pingClient.R().Get(url)
+	resp, _ := pingClient.R().Get(url) // GET
 	if resp.IsSuccess() {
 		return nil
 	}

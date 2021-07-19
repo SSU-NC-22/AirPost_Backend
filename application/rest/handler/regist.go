@@ -10,6 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+/**************************************************************/
+/* Sink handler                                               */
+/**************************************************************/
 // ListSinks ...
 // @Summary List sink node(raspi info)
 // @Description get sinks list
@@ -102,6 +105,9 @@ func (h *Handler) UnregistSink(c *gin.Context) {
 	c.JSON(http.StatusOK, sink)
 }
 
+/**************************************************************/
+/* Node handler                                               */
+/**************************************************************/
 // ListNodes ...
 // @Summary List sensor node
 // @Description get nodes listh.eu.CreateNodeEvent(&node)
@@ -213,6 +219,9 @@ func (h *Handler) UnregistNode(c *gin.Context) {
 	c.JSON(http.StatusOK, node)
 }
 
+/**************************************************************/
+/* Sensor handler                                             */
+/**************************************************************/
 // ListSensors ...
 // @Summary List sensor info
 // @Description get sensors list
@@ -307,23 +316,9 @@ func (h *Handler) UnregistSensor(c *gin.Context) {
 	c.JSON(http.StatusOK, sensor)
 }
 
-// ListLogics ...
-// @Summary List logics info
-// @Description get logics list
-// @Tags logic
-// @Produce  json
-// @Success 200 {array} model.Logic "return all logics info."
-// @Router /regist/logic [get]
-func (h *Handler) ListLogics(c *gin.Context) {
-	logics, err := h.ru.GetLogics()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	aLogics := adapter.LogicsToAdapter(logics)
-	c.JSON(http.StatusOK, aLogics)
-}
-
+/**************************************************************/
+/* Actuator handler                                           */
+/**************************************************************/
 // ListActuator ...
 func (h *Handler) ListActuators(c *gin.Context) {
 	var (
@@ -394,6 +389,26 @@ func (h *Handler) UnregistActuator(c *gin.Context) {
 	c.JSON(http.StatusOK, actuator)
 }
 
+/**************************************************************/
+/* Logic handler                                              */
+/**************************************************************/
+// ListLogics ...
+// @Summary List logics info
+// @Description get logics list
+// @Tags logic
+// @Produce  json
+// @Success 200 {array} model.Logic "return all logics info."
+// @Router /regist/logic [get]
+func (h *Handler) ListLogics(c *gin.Context) {
+	logics, err := h.ru.GetLogics()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	aLogics := adapter.LogicsToAdapter(logics)
+	c.JSON(http.StatusOK, aLogics)
+}
+
 // RegistLogic ...
 // @Summary Add logic info
 // @Description Add logic info
@@ -455,6 +470,9 @@ func (h *Handler) UnregistLogic(c *gin.Context) {
 	c.JSON(http.StatusOK, resLogic)
 }
 
+/**************************************************************/
+/* Logic service handler                                      */
+/**************************************************************/
 // ListLogicServices ...
 // @Summary List LogicServices info
 // @Description get LogicServices list
@@ -496,6 +514,9 @@ func (h *Handler) UnregistLogicService(c *gin.Context) {
 	c.JSON(http.StatusOK, logicService)
 }
 
+/**************************************************************/
+/* Topic handler                                              */
+/**************************************************************/
 // ListTopics ...
 // @Summary List topics info
 // @Description get topics list

@@ -34,6 +34,9 @@ func NewEventUsecase(sir repository.SinkRepo, lsr repository.LogicServiceRepo) *
 	return eu
 }
 
+/**************************************************************/
+/* logic service event usecase                                */
+/**************************************************************/
 // `{
 // 	"addr" : "localhost:8082",
 // 	"topic" : {
@@ -83,6 +86,7 @@ const (
 	DeleteLogic
 )
 
+// url을 만들기 위한 event path
 var EventPath = [...]string{
 	"/event/sink/delete",
 	"/event/sink/create",
@@ -99,16 +103,20 @@ type pingRequest struct {
 	body interface{}
 }
 
+// ping request
 func (pr *pingRequest) ping() error {
 	url := makeUrl(pr.ls.Addr, EventPath[pr.e])
 
-	resp, _ := pingClient.R().SetBody(pr.body).Post(url)
+	resp, _ := pingClient.R().SetBody(pr.body).Post(url) // POST
 	if resp.IsSuccess() {
 		return nil
 	}
 	return fmt.Errorf("ping fail : %v", *pr)
 }
 
+/**************************************************************/
+/* sink event usecase                                         */
+/**************************************************************/
 func (eu *eventUsecase) PostToSink(sid int) error {
 	if sink, err := eu.sir.FindByIDWithNodesSensorsValuesTopic(sid); err != nil {
 		return err

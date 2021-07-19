@@ -9,23 +9,26 @@ import (
 )
 
 func waitRespGroup(e EVENT, body interface{}, ll []model.LogicService) (prl []pingRequest) {
-	var wg sync.WaitGroup
+	var wg sync.WaitGroup // 고루틴이 종료될 때까지 대기
 	for _, l := range ll {
-		wg.Add(1)
+		wg.Add(1) // WaitGroup에 대기 중인 고루틴 개수 추가
 		go func(_l model.LogicService) {
-			url := makeUrl(_l.Addr, EventPath[e])
-			resp, _ := eventClient.R().SetBody(body).Post(url)
+			url := makeUrl(_l.Addr, EventPath[e]) // 이벤트 발생을 위한 url 생성
+			resp, _ := eventClient.R().SetBody(body).Post(url) // POST 수행
 			log.Println("Post 내용 : ", body, "url : ", url)
 			if !resp.IsSuccess() {
 				prl = append(prl, pingRequest{_l, e, body})
 			}
-			wg.Done()
+			wg.Done() // 대기 중인 고루틴의 수행이 종료되는 것을 알려줌
 		}(l)
 	}
-	wg.Wait()
+	wg.Wait() // 모든 고루틴이 종료될 때까지 대기
 	return
 }
 
+/**************************************************************/
+/* sink event usecase                                         */
+/**************************************************************/
 func (eu *eventUsecase) DeleteSinkEvent(s *model.Sink) error {
 	e := DeleteSink
 
@@ -63,6 +66,9 @@ func (eu *eventUsecase) CreateSinkEvent(s *model.Sink) error {
 	return nil
 }
 
+/**************************************************************/
+/* node event usecase                                         */
+/**************************************************************/
 func (eu *eventUsecase) CreateNodeEvent(n *model.Node) error {
 	e := CreateNode
 
@@ -87,6 +93,9 @@ func (eu *eventUsecase) DeleteNodeEvent(n *model.Node) error {
 	return nil
 }
 
+/**************************************************************/
+/* sensor event usecase                                       */
+/**************************************************************/
 func (eu *eventUsecase) DeleteSensorEvent(s *model.Sensor) error {
 	e := DeleteSensor
 
@@ -99,6 +108,9 @@ func (eu *eventUsecase) DeleteSensorEvent(s *model.Sensor) error {
 	return nil
 }
 
+/**************************************************************/
+/* logic event usecase                                         */
+/**************************************************************/
 func (eu *eventUsecase) CreateLogicEvent(l *model.Logic) error {
 	e := CreateLogic
 

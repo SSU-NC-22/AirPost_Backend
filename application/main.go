@@ -41,8 +41,8 @@ func main() {
 	r.Use(cors.New(config))
 
 	// swagger
-	docs.SwaggerInfo.Title = "ToIoT application API"
-	docs.SwaggerInfo.Description = "This is a registration server for ToIoT UI."
+	docs.SwaggerInfo.Title = "AirPost application API"
+	docs.SwaggerInfo.Description = "This is a registration server for AirPost UI."
 	docs.SwaggerInfo.Version = "0.1"
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
