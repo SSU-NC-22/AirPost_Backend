@@ -6,14 +6,12 @@ import "github.com/eunnseo/AirPost/application/domain/model"
 /* Node adapter                                               */
 /**************************************************************/
 type Node struct {
-	ID       int        `json:"id"`
-	Name     string     `json:"name"`
-	Location Location   `json:"location"`
-	SinkID   int        `json:"sink_id"`
-	Sink     model.Sink `json:"sink"`
-	// Sensors  []model.Sensor `json:"sensors"`
-	SensorValues []model.SensorValue `json:"sensor_values"`
-	Logics       []model.Logic       `json:"logics"`
+	ID       int            `json:"id"`
+	Name     string         `json:"name"`
+	Location Location       `json:"location"`
+	SinkID   int            `json:"sink_id"`
+	Sink     model.Sink     `json:"sink"`
+	Sensors  []model.Sensor `json:"sensors"`
 }
 
 type Location struct {
@@ -65,10 +63,10 @@ type NodePage struct {
 	Pages int          `json:"pages"`
 }
 
-// type SensorPage struct {
-// 	Sensors []model.Sensor `json:"sensors"`
-// 	Pages   int            `json:"pages"`
-// }
+type SensorPage struct {
+	Sensors []model.Sensor `json:"sensors"`
+	Pages   int            `json:"pages"`
+}
 
 type SinkAddr struct {
 	Sid  int    `json:"sid"`
