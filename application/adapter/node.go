@@ -2,13 +2,18 @@ package adapter
 
 import "github.com/eunnseo/AirPost/application/domain/model"
 
+/**************************************************************/
+/* Node adapter                                               */
+/**************************************************************/
 type Node struct {
-	ID       int            `json:"id"`
-	Name     string         `json:"name"`
-	Location Location       `json:"location"`
-	SinkID   int            `json:"sink_id"`
-	Sink     model.Sink     `json:"sink"`
-	Sensors  []model.Sensor `json:"sensors"`
+	ID       int        `json:"id"`
+	Name     string     `json:"name"`
+	Location Location   `json:"location"`
+	SinkID   int        `json:"sink_id"`
+	Sink     model.Sink `json:"sink"`
+	// Sensors  []model.Sensor `json:"sensors"`
+	SensorValues []model.SensorValue `json:"sensor_values"`
+	Logics       []model.Logic       `json:"logics"`
 }
 
 type Location struct {
@@ -30,6 +35,9 @@ func (sq Square) IsBinded() bool {
 	return false
 }
 
+/**************************************************************/
+/* Page adapter                                               */
+/**************************************************************/
 type Page struct {
 	Page int `form:"page" json:"page"`
 	Sink int `form:"sink" json:"sink"`
@@ -57,10 +65,10 @@ type NodePage struct {
 	Pages int          `json:"pages"`
 }
 
-type SensorPage struct {
-	Sensors []model.Sensor `json:"sensors"`
-	Pages   int            `json:"pages"`
-}
+// type SensorPage struct {
+// 	Sensors []model.Sensor `json:"sensors"`
+// 	Pages   int            `json:"pages"`
+// }
 
 type SinkAddr struct {
 	Sid  int    `json:"sid"`

@@ -6,12 +6,17 @@ import (
 	"github.com/eunnseo/AirPost/application/domain/model"
 )
 
+/**************************************************************/
+/* Logic adapter                                              */
+/**************************************************************/
 type Logic struct {
-	ID        int          `json:"id"`
-	LogicName string       `json:"logic_name"`
-	Elems     []Element    `json:"elems"` // 엘렘 배열 , value time email 중 선택한거 드가있음
-	SensorID  int          `json:"sensor_id"`
-	Sensor    model.Sensor `json:"sensor"`
+	ID        int       `json:"id"`
+	LogicName string    `json:"logic_name"`
+	Elems     []Element `json:"elems"` // 엘렘 배열 , value time email 중 선택한거 드가있음
+	// SensorID  int          `json:"sensor_id"`
+	// Sensor    model.Sensor `json:"sensor"`
+	NodeID int        `json:"node_id"`
+	Node   model.Node `json:"node"`
 }
 
 /*
@@ -35,8 +40,10 @@ func LogicToAdapter(ml *model.Logic) (Logic, error) {
 			ID:        ml.ID,
 			LogicName: ml.Name,
 			Elems:     elems,
-			SensorID:  ml.SensorID,
-			Sensor:    ml.Sensor,
+			// SensorID:  ml.SensorID,
+			// Sensor:    ml.Sensor,
+			NodeID: ml.NodeID,
+			Node:   ml.Node,
 		}, nil
 	}
 }
@@ -56,10 +63,11 @@ func LogicToModel(l *Logic) (model.Logic, error) {
 		return model.Logic{}, err
 	} else {
 		return model.Logic{
-			ID:       l.ID,
-			Name:     l.LogicName,
-			Elems:    string(b),
-			SensorID: l.SensorID,
+			ID:    l.ID,
+			Name:  l.LogicName,
+			Elems: string(b),
+			// SensorID: l.SensorID,
+			NodeID: l.NodeID,
 		}, nil
 	}
 }
