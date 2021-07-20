@@ -26,7 +26,8 @@ type App struct {
 func (as *App) Getenv() {
 	as.Server = os.Getenv("APP_SERVER")
 	if as.Server == "" {
-		as.Server = "1.237.226.48:8081"
+		// as.Server = "1.237.226.48:8081"
+		as.Server = "10.5.110.33:8081"
 	}
 }
 

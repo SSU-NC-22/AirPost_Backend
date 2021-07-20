@@ -14,7 +14,6 @@ import (
 
 // TODO : if l.Addr is dubplicated then remove old one
 func (h *Handler) RegistLogicService(c *gin.Context) {
-	fmt.Println("\n-------------- RegistLogicService --------------")
 	var l model.LogicService
 	if err := c.ShouldBindJSON(&l); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

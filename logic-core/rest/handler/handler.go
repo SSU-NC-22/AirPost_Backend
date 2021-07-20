@@ -21,6 +21,9 @@ func NewHandler(evuc usecase.EventUsecase, lcuc usecase.LogicCoreUsecase) *Handl
 	}
 }
 
+/**************************************************************/
+/* Sink handler                                               */
+/**************************************************************/
 func (h *Handler) CreateSink(c *gin.Context) {
 	var addr adapter.SinkAddr
 	log.Println("in CreateSink")
@@ -59,6 +62,9 @@ func (h *Handler) DeleteSink(c *gin.Context) {
 	c.JSON(http.StatusOK, nl)
 }
 
+/**************************************************************/
+/* Node handler                                               */
+/**************************************************************/
 func (h *Handler) CreateNode(c *gin.Context) {
 	var an adapter.Node
 	if err := c.ShouldBindJSON(&an); err != nil {
@@ -85,6 +91,9 @@ func (h *Handler) DeleteNode(c *gin.Context) {
 	c.JSON(http.StatusOK, an)
 }
 
+/**************************************************************/
+/* Snesor handler                                               */
+/**************************************************************/
 func (h *Handler) DeleteSensor(c *gin.Context) {
 	var as adapter.Sensor
 	if err := c.ShouldBindJSON(&as); err != nil {
@@ -98,6 +107,9 @@ func (h *Handler) DeleteSensor(c *gin.Context) {
 	c.JSON(http.StatusOK, as)
 }
 
+/**************************************************************/
+/* Logic handler                                              */
+/**************************************************************/
 func (h *Handler) CreateLogic(c *gin.Context) {
 	var al adapter.Logic
 

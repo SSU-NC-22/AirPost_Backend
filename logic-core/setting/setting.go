@@ -26,18 +26,24 @@ func GetenvStr(target *string, init, env string) {
 	}
 }
 
+/**************************************************************/
+/* Logic setting                                              */
+/**************************************************************/
 type Logic struct {
 	Server string
 	Listen string
 }
 
 func (ls *Logic) Getenv() {
-	GetenvStr(&ls.Server, "1.237.226.48:8084", "LOGIC_SERVER")
+	GetenvStr(&ls.Server, "10.5.110.33:8084", "LOGIC_SERVER")
 	GetenvStr(&ls.Listen, ls.Server, "LOGIC_LISTEN")
 }
 
 var Logicsetting = &Logic{}
 
+/**************************************************************/
+/* App setting                                                */
+/**************************************************************/
 type App struct {
 	Server string
 }
@@ -50,7 +56,7 @@ func (as *App) Getenv() {
 		}
 	*/
 	if as.Server == "" {
-		as.Server = "1.237.226.48:8081"
+		as.Server = "10.5.110.33:8081"
 		// as.Server = "220.70.2.5:8081"
 	}
 
@@ -58,6 +64,9 @@ func (as *App) Getenv() {
 
 var Appsetting = &App{}
 
+/**************************************************************/
+/* Kafka setting                                              */
+/**************************************************************/
 type Kafka struct {
 	Broker      string   `toml:"broker"`
 	GroupID     string   `toml:"group_id"`
@@ -66,7 +75,7 @@ type Kafka struct {
 }
 
 func (ks *Kafka) Getenv() {
-	GetenvStr(&ks.Broker, "1.237.226.48:9092", "KAFKA_BROKER") //"localhost:9092", "KAFKA_BROKER")
+	GetenvStr(&ks.Broker, "10.5.110.33:9092", "KAFKA_BROKER") //"localhost:9092", "KAFKA_BROKER")
 	GetenvStr(&ks.GroupID, "logic1", "KAFKA_GROUP")
 	ks.Topics = []string{os.Getenv("KAFKA_TOPIC")}
 	if ks.Topics[0] == "" {
@@ -77,6 +86,9 @@ func (ks *Kafka) Getenv() {
 
 var Kafkasetting = &Kafka{}
 
+/**************************************************************/
+/* Elastic setting                                            */
+/**************************************************************/
 type Elastic struct {
 	Addresses    []string `toml:"addresses"`
 	RequestRetry int      `toml:"request_retry"`
@@ -88,7 +100,7 @@ type Elastic struct {
 func (es *Elastic) Getenv() {
 	temp := os.Getenv("ELASTIC_SERVER")
 	if temp == "" {
-		temp = "1.237.226.48:9200" //"localhost:9200"
+		temp = "10.5.110.33:9200" //"localhost:9200"
 	}
 	es.Addresses = []string{fmt.Sprintf("http://%s", temp)}
 	GetenvInt(&es.RequestRetry, 3, "ELASTIC_RETRY")
