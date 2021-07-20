@@ -22,11 +22,11 @@ type RegistUsecase interface {
 	RegistNode(n *model.Node) error
 	UnregistNode(n *model.Node) error
 
-	GetSensorPageCount(size int) int
-	GetSensors() ([]model.Sensor, error)
-	GetSensorsPage(p adapter.Page) ([]model.Sensor, error)
-	RegistSensor(s *model.Sensor) error
-	UnregistSensor(s *model.Sensor) error
+	// GetSensorPageCount(size int) int
+	// GetSensors() ([]model.Sensor, error)
+	// GetSensorsPage(p adapter.Page) ([]model.Sensor, error)
+	// RegistSensor(s *model.Sensor) error
+	// UnregistSensor(s *model.Sensor) error
 
 	GetActuatorPageCount(size int) int
 	GetActuators() ([]model.Actuator, error)
@@ -55,7 +55,7 @@ type EventUsecase interface {
 	DeleteSinkEvent(s *model.Sink) error
 	CreateNodeEvent(n *model.Node) error
 	DeleteNodeEvent(n *model.Node) error
-	DeleteSensorEvent(s *model.Sensor) error
+	// DeleteSensorEvent(s *model.Sensor) error
 	CreateLogicEvent(l *model.Logic) error
 	DeleteLogicEvent(l *model.Logic) error
 

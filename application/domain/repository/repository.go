@@ -24,13 +24,13 @@ type NodeRepo interface {
 	Delete(*model.Node) error
 }
 
-type SensorRepo interface {
-	GetPages(size int) int
-	FindsWithValues() ([]model.Sensor, error)
-	FindsPage(p adapter.Page) ([]model.Sensor, error)
-	Create(*model.Sensor) error
-	Delete(*model.Sensor) error
-}
+// type SensorRepo interface {
+// 	GetPages(size int) int
+// 	FindsWithValues() ([]model.Sensor, error)
+// 	FindsPage(p adapter.Page) ([]model.Sensor, error)
+// 	Create(*model.Sensor) error
+// 	Delete(*model.Sensor) error
+// }
 
 type ActuatorRepo interface {
 	GetPages(size int) int

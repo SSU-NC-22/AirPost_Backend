@@ -232,38 +232,38 @@ func (h *Handler) UnregistNode(c *gin.Context) {
 // @Success 200 {array} model.Sensor "default, return all sensors."
 // @Success 201 {object} adapter.SensorPage "if page query is exist, return pagenation result. pages only valid when page is 1."
 // @Router /regist/sensor [get]
-func (h *Handler) ListSensors(c *gin.Context) {
-	var (
-		err     error
-		sensors []model.Sensor
-		page    adapter.Page
-		pages   int
-	)
+// func (h *Handler) ListSensors(c *gin.Context) {
+// 	var (
+// 		err     error
+// 		sensors []model.Sensor
+// 		page    adapter.Page
+// 		pages   int
+// 	)
 
-	if c.Bind(&page); page.IsBinded() {
-		if page.Size == 0 {
-			page.Size = 10
-		}
-		if sensors, err = h.ru.GetSensorsPage(page); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		if page.Page == 1 {
-			pages = h.ru.GetSensorPageCount(page.Size)
-		}
-		c.JSON(http.StatusOK, gin.H{"sensors": sensors, "pages": pages})
-		return
-	} else {
-		sensors, err := h.ru.GetSensors()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, sensors)
-		return
-	}
+// 	if c.Bind(&page); page.IsBinded() {
+// 		if page.Size == 0 {
+// 			page.Size = 10
+// 		}
+// 		if sensors, err = h.ru.GetSensorsPage(page); err != nil {
+// 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 			return
+// 		}
+// 		if page.Page == 1 {
+// 			pages = h.ru.GetSensorPageCount(page.Size)
+// 		}
+// 		c.JSON(http.StatusOK, gin.H{"sensors": sensors, "pages": pages})
+// 		return
+// 	} else {
+// 		sensors, err := h.ru.GetSensors()
+// 		if err != nil {
+// 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 			return
+// 		}
+// 		c.JSON(http.StatusOK, sensors)
+// 		return
+// 	}
 
-}
+// }
 
 // RegistSensor ...
 // @Summary Add sensor info
@@ -274,20 +274,20 @@ func (h *Handler) ListSensors(c *gin.Context) {
 // @Produce  json
 // @Success 200 {object} model.Node "include sensorValues info"
 // @Router /regist/sensor [post]
-func (h *Handler) RegistSensor(c *gin.Context) {
-	var sensor model.Sensor
-	if err := c.ShouldBindJSON(&sensor); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+// func (h *Handler) RegistSensor(c *gin.Context) {
+// 	var sensor model.Sensor
+// 	if err := c.ShouldBindJSON(&sensor); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
 	
-	err := h.ru.RegistSensor(&sensor)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, sensor)
-}
+// 	err := h.ru.RegistSensor(&sensor)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
+// 	c.JSON(http.StatusOK, sensor)
+// }
 
 // UnregistSensor ...
 // @Summary Delete sensor
@@ -298,23 +298,23 @@ func (h *Handler) RegistSensor(c *gin.Context) {
 // @Produce  json
 // @Success 200 {object} model.Sensor "include logics info"
 // @Router /regist/sensor [delete]
-func (h *Handler) UnregistSensor(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	sensor := model.Sensor{ID: id}
+// func (h *Handler) UnregistSensor(c *gin.Context) {
+// 	id, err := strconv.Atoi(c.Param("id"))
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+// 	sensor := model.Sensor{ID: id}
 
-	err = h.ru.UnregistSensor(&sensor)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+// 	err = h.ru.UnregistSensor(&sensor)
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
 
-	h.eu.DeleteSensorEvent(&sensor)
-	c.JSON(http.StatusOK, sensor)
-}
+// 	h.eu.DeleteSensorEvent(&sensor)
+// 	c.JSON(http.StatusOK, sensor)
+// }
 
 /**************************************************************/
 /* Actuator handler                                           */

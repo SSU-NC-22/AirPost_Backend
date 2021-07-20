@@ -40,13 +40,13 @@ func (n *Node) BeforeDelete(tx *gorm.DB) (err error) {
 }
 
 // sensor
-func (s *Sensor) AfterCreate(tx *gorm.DB) (err error) {
-	return tx.Preload("SensorValues", orderByASC).Find(s).Error
-}
+// func (s *Sensor) AfterCreate(tx *gorm.DB) (err error) {
+// 	return tx.Preload("SensorValues", orderByASC).Find(s).Error
+// }
 
-func (s *Sensor) BeforeDelete(tx *gorm.DB) (err error) {
-	return tx.Preload("Logics").Find(s).Error
-}
+// func (s *Sensor) BeforeDelete(tx *gorm.DB) (err error) {
+// 	return tx.Preload("Logics").Find(s).Error
+// }
 
 // logic
 func (l *Logic) AfterCreate(tx *gorm.DB) (err error) {

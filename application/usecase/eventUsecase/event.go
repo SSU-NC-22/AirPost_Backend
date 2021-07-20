@@ -96,17 +96,17 @@ func (eu *eventUsecase) DeleteNodeEvent(n *model.Node) error {
 /**************************************************************/
 /* sensor event usecase                                       */
 /**************************************************************/
-func (eu *eventUsecase) DeleteSensorEvent(s *model.Sensor) error {
-	e := DeleteSensor
+// func (eu *eventUsecase) DeleteSensorEvent(s *model.Sensor) error {
+// 	e := DeleteSensor
 
-	ll, err := eu.lsr.Finds()
-	if err != nil {
-		return err
-	}
-	eu.requestRetry = append(eu.requestRetry, waitRespGroup(e, *s, ll)...)
+// 	ll, err := eu.lsr.Finds()
+// 	if err != nil {
+// 		return err
+// 	}
+// 	eu.requestRetry = append(eu.requestRetry, waitRespGroup(e, *s, ll)...)
 
-	return nil
-}
+// 	return nil
+// }
 
 /**************************************************************/
 /* logic event usecase                                         */
