@@ -41,7 +41,7 @@ type ActuatorRepo interface {
 }
 
 type LogicRepo interface {
-	FindsWithSensorValues() ([]model.Logic, error)
+	FindsWithNodeValues() ([]model.Logic, error)
 	Create(*model.Logic) error
 	Delete(*model.Logic) error
 }

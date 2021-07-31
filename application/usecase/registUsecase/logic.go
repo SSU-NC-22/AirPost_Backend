@@ -6,7 +6,7 @@ import "github.com/eunnseo/AirPost/application/domain/model"
 /* logic regist usecase                                       */
 /**************************************************************/
 func (ru *registUsecase) GetLogics() ([]model.Logic, error) {
-	return ru.lgr.FindsWithSensorValues()
+	return ru.lgr.FindsWithNodeValues()
 }
 
 func (ru *registUsecase) RegistLogic(l *model.Logic) error {

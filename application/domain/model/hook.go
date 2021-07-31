@@ -50,16 +50,16 @@ func (n *Node) BeforeDelete(tx *gorm.DB) (err error) {
 
 // logic
 func (l *Logic) AfterCreate(tx *gorm.DB) (err error) {
-	return tx.Preload("Sensor").Find(l).Error
+	return tx.Preload("Node").Find(l).Error
 }
 
 func (l *Logic) BeforeDelete(tx *gorm.DB) (err error) {
-	return tx.Preload("Sensor").Find(l).Error
+	return tx.Preload("Node").Find(l).Error
 }
 
 // logicService
 func (l *LogicService) AfterCreate(tx *gorm.DB) (err error) {
-	return tx.Preload("Topic.Sinks.Nodes.Sensors.Logics").Preload("Topic.Sinks.Nodes.Sensors.SensorValues", orderByASC).Preload("Topic.Sinks.Nodes.Sensors").Preload("Topic.Sinks.Nodes").Preload("Topic.Sinks").Preload("Topic").Find(l).Error
+	return tx.Preload("Topic.Sinks.Nodes.Logics").Preload("Topic.Sinks.Nodes.SensorValues", orderByASC).Preload("Topic.Sinks.Nodes").Preload("Topic.Sinks").Preload("Topic").Find(l).Error
 }
 
 func (l *LogicService) BeforeDelete(tx *gorm.DB) (err error) {
