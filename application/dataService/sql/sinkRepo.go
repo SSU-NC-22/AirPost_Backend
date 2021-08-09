@@ -34,12 +34,12 @@ func (sir *sinkRepo) FindsPage(p adapter.Page) (sl []model.Sink, err error) {
 }
 
 func (sir *sinkRepo) FindsByTopicIDWithNodesSensorsValuesLogics(tid int) (sl []model.Sink, err error) {
-	return sl, sir.db.Where("topic_id=?", tid).Preload("Nodes.Sensors.Logics").Preload("Nodes.Sensors.SensorValues", orderByASC).Preload("Nodes.Sensors").Preload("Nodes").Find(&sl).Error
+	return sl, sir.db.Where("topic_id=?", tid).Preload("Nodes.Logics").Preload("Nodes.SensorValues", orderByASC).Preload("Nodes").Find(&sl).Error
 }
 
 func (sir *sinkRepo) FindByIDWithNodesSensorsValuesTopic(id int) (*model.Sink, error) {
 	s := &model.Sink{}
-	return s, sir.db.Where("id=?", id).Preload("Nodes.Sensors.SensorValues", orderByASC).Preload("Nodes.Sensors").Preload("Nodes").Preload("Topic").Find(s).Error
+	return s, sir.db.Where("id=?", id).Preload("Nodes.SensorValues", orderByASC).Preload("Nodes").Preload("Topic").Find(s).Error
 }
 
 func (sir *sinkRepo) Create(s *model.Sink) error {
