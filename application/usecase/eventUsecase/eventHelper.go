@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/eunnseo/AirPost/application/domain/model"
+	// "github.com/eunnseo/AirPost/application/domain/model"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -20,17 +20,17 @@ func init() {
 	pingClient.SetRetryCount(2).SetRetryWaitTime(100 * time.Millisecond).SetTimeout(500 * time.Millisecond)
 }
 
-// ping response
-func ping(l model.LogicService) error {
-	path := "/ping"
-	url := makeUrl(l.Addr, path)
+// ping response - unused
+// func ping(l model.LogicService) error {
+// 	path := "/ping"
+// 	url := makeUrl(l.Addr, path)
 
-	resp, _ := pingClient.R().Get(url) // GET
-	if resp.IsSuccess() {
-		return nil
-	}
-	return fmt.Errorf("%s response error : %d", l.Addr, resp.StatusCode())
-}
+// 	resp, _ := pingClient.R().Get(url) // GET
+// 	if resp.IsSuccess() {
+// 		return nil
+// 	}
+// 	return fmt.Errorf("%s response error : %d", l.Addr, resp.StatusCode())
+// }
 
 func makeUrl(addr, path string) string {
 	return fmt.Sprintf("http://%s%s", addr, path)

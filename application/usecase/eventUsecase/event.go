@@ -38,18 +38,10 @@ func (eu *eventUsecase) DeleteSinkEvent(s *model.Sink) error {
 	}
 
 	eu.requestRetry = append(eu.requestRetry, waitRespGroup(e, s.Nodes, ll)...)
-	// var wg sync.WaitGroup
-	// for _, l := range ll {
-	// 	wg.Add(1)
-	// 	go func() {
-	// 		url := makeUrl(l.Addr, path)
-	// 		eventClient.R().SetBody(s.Nodes).Post(url)
-	// 	}()
-	// }
-	// wg.Wait()
 
 	return nil
 }
+
 func (eu *eventUsecase) CreateSinkEvent(s *model.Sink) error {
 	e := CreateSink
 	sinkaddr := adapter.SinkAddr{
