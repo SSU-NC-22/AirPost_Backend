@@ -22,13 +22,3 @@ type SensorValue struct {
 func (SensorValue) TableName() string {
 	return "sensor_values"
 }
-
-type StateValue struct {
-	NodeID		int		`json:"node_id" gorm:"primaryKey"`
-	ValueName	string	`json:"value_name" gorm:"primaryKey;type:varchar(32)"`
-	Index		int		`json:"index" gorm:"not null"`
-}
-
-func (StateValue) TableName() string {
-	return "state_values"
-}
