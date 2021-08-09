@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -174,6 +175,7 @@ func (h *Handler) ListNodes(c *gin.Context) {
 // @Success 200 {object} model.Node "include sink, sink.topic, sensors, sensors.logics info"
 // @Router /regist/node [post]
 func (h *Handler) RegistNode(c *gin.Context) {
+	fmt.Println("\n----- handler RegistNode func start -----")
 	var node model.Node
 	if err := c.ShouldBindJSON(&node); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -189,6 +191,7 @@ func (h *Handler) RegistNode(c *gin.Context) {
 	go h.eu.PostToSink(node.SinkID)
 	c.JSON(http.StatusOK, node)
 
+	fmt.Println("\n----- handler RegistNode func fin -----")
 }
 
 // UnregistNode ...
