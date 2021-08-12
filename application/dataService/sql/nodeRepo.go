@@ -4,7 +4,6 @@ import (
 	"github.com/eunnseo/AirPost/application/adapter"
 	"github.com/eunnseo/AirPost/application/domain/model"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type nodeRepo struct {
@@ -48,18 +47,17 @@ func (ndr *nodeRepo) FindsSquare(sq adapter.Square) (nl []model.Node, err error)
 }
 
 func (ndr *nodeRepo) Create(n *model.Node) error {
-	// return ndr.db.Transaction(func(tx *gorm.DB) error {
-	// 	if err := tx.Omit("Sensors").Create(n).Error; err != nil {
-	// 		return err
-	// 	}
-	// 	s := n.Sensors
-	// 	n.Sensors = []model.Sensor{}
-	// 	if err := tx.Model(n).Association("Sensors").Append(s); err != nil {
-	// 		return err
-	// 	}
-	// 	return nil
-	// })
-	return ndr.db.Omit(clause.Associations).Create(n).Error
+	return ndr.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Omit("SensorValues").Omit("Logics").Create(n).Error; err != nil {
+			return err
+		}
+		sv := n.SensorValues
+		n.SensorValues = []model.SensorValue{}
+		if err := tx.Model(n).Association("SensorValues").Append(sv); err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (ndr *nodeRepo) Delete(n *model.Node) error {
