@@ -23,13 +23,13 @@ func main() {
 
 	sir := sql.NewSinkRepo()
 	ndr := sql.NewNodeRepo()
-	snr := sql.NewSensorRepo()
+	// snr := sql.NewSensorRepo()
 	lgr := sql.NewLogicRepo()
 	lsr := sql.NewLogicServiceRepo()
 	tpr := sql.NewTopicRepo()
 	acr := sql.NewActuatorkRepo()
 
-	ru := registUsecase.NewRegistUsecase(sir, ndr, snr, lgr, lsr, tpr, acr)
+	ru := registUsecase.NewRegistUsecase(sir, ndr, lgr, lsr, tpr, acr)
 	eu := eventUsecase.NewEventUsecase(sir, lsr)
 
 	h := handler.NewHandler(ru, eu)
@@ -68,7 +68,7 @@ func setRegistrationRoute(r *gin.Engine, h *handler.Handler) {
 		{
 			sink.GET("", h.ListSinks)
 			sink.POST("", h.RegistSink)
-			sink.DELETE("/Satates:id", h.UnregistSink)
+			sink.DELETE("/:id", h.UnregistSink)
 		}
 		node := regist.Group("/node")
 		{
@@ -76,12 +76,12 @@ func setRegistrationRoute(r *gin.Engine, h *handler.Handler) {
 			node.POST("", h.RegistNode)
 			node.DELETE("/:id", h.UnregistNode)
 		}
-		sensor := regist.Group("/sensor")
-		{
-			sensor.GET("", h.ListSensors)
-			sensor.POST("", h.RegistSensor)
-			sensor.DELETE("/:id", h.UnregistSensor)
-		}
+		// sensor := regist.Group("/sensor")
+		// {
+		// 	sensor.GET("", h.ListSensors)
+		// 	sensor.POST("", h.RegistSensor)
+		// 	sensor.DELETE("/:id", h.UnregistSensor)
+		// }
 		actuator := regist.Group("/actuator")
 		{
 			actuator.GET("", h.ListActuators)

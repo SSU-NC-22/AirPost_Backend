@@ -20,10 +20,10 @@ func NewRegistRepo() (*registRepo, map[int]model.Sink) {
 			nmu:   &sync.RWMutex{},
 			ninfo: make(map[int]model.Node),
 		},
-		sensorRepo{
-			smu:   &sync.RWMutex{},
-			sinfo: make(map[int]model.Sensor),
-		},
+		// sensorRepo{
+		// 	smu:   &sync.RWMutex{},
+		// 	sinfo: make(map[int]model.Sensor),
+		// },
 		sinkAddrRepo{
 			samu:  &sync.RWMutex{},
 			addrs: make(map[int]model.Sink),
@@ -39,7 +39,7 @@ func NewRegistRepo() (*registRepo, map[int]model.Sink) {
 
 type registRepo struct {
 	nodeRepo
-	sensorRepo
+	// sensorRepo
 	sinkAddrRepo
 	nodeInfoRepo
 }

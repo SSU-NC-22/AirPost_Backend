@@ -30,37 +30,34 @@ func (ndr *nodeRepo) GetPages(p adapter.Page) int {
 }
 
 func (ndr *nodeRepo) FindsWithSensorsValues() (nl []model.Node, err error) {
-	return nl, ndr.db.Preload("Sensors.SensorValues", orderByASC).Preload("Sensors").Find(&nl).Error
+	return nl, ndr.db.Preload("SensorValues", orderByASC).Find(&nl).Error
 }
 
 func (ndr *nodeRepo) FindsPage(p adapter.Page) (nl []model.Node, err error) {
 	offset := p.GetOffset()
 	if p.Sink == 0 {
-		return nl, ndr.db.Offset(offset).Limit(p.Size).Preload("Sensors.SensorValues", orderByASC).Preload("Sensors").Find(&nl).Error
+		return nl, ndr.db.Offset(offset).Limit(p.Size).Preload("SensorValues", orderByASC).Find(&nl).Error
 	} else {
-		return nl, ndr.db.Where("sink_id=?", p.Sink).Offset(offset).Limit(p.Size).Preload("Sensors.SensorValues", orderByASC).Preload("Sensors").Find(&nl).Error
+		return nl, ndr.db.Where("sink_id=?", p.Sink).Offset(offset).Limit(p.Size).Preload("SensorValues", orderByASC).Find(&nl).Error
 	}
 }
 
 func (ndr *nodeRepo) FindsSquare(sq adapter.Square) (nl []model.Node, err error) {
-	return nl, ndr.db.Where("loc_lon BETWEEN ? AND ?", sq.Left, sq.Right).Where("loc_lat BETWEEN ? AND ?", sq.Down, sq.Up).Preload("Sensors.SensorValues", orderByASC).Preload("Sensors").Find(&nl).Error
+	return nl, ndr.db.Where("loc_lon BETWEEN ? AND ?", sq.Left, sq.Right).Where("loc_lat BETWEEN ? AND ?", sq.Down, sq.Up).Preload("SensorValues", orderByASC).Find(&nl).Error
 }
 
 func (ndr *nodeRepo) Create(n *model.Node) error {
 	return ndr.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Omit("Sensors").Create(n).Error; err != nil {
+		if err := tx.Omit("SensorValues").Omit("Logics").Create(n).Error; err != nil {
 			return err
 		}
-		s := n.Sensors
-		n.Sensors = []model.Sensor{}
-		if err := tx.Model(n).Association("Sensors").Append(s); err != nil {
+		sv := n.SensorValues
+		n.SensorValues = []model.SensorValue{}
+		if err := tx.Model(n).Association("SensorValues").Append(sv); err != nil {
 			return err
 		}
 		return nil
 	})
-	// s := n.Sensors
-	// n.Sensors = []model.Sensor{}
-	// return ndr.db.Omit("Sensors").Create(n).Association("Sensors").Append(s)
 }
 
 func (ndr *nodeRepo) Delete(n *model.Node) error {

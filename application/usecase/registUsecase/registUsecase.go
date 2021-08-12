@@ -5,7 +5,7 @@ import "github.com/eunnseo/AirPost/application/domain/repository"
 type registUsecase struct {
 	sir repository.SinkRepo
 	ndr repository.NodeRepo
-	snr repository.SensorRepo
+	// snr repository.SensorRepo
 	lgr repository.LogicRepo
 	lsr repository.LogicServiceRepo
 	tpr repository.TopicRepo
@@ -14,7 +14,7 @@ type registUsecase struct {
 
 func NewRegistUsecase(sir repository.SinkRepo,
 	ndr repository.NodeRepo,
-	snr repository.SensorRepo,
+	// snr repository.SensorRepo,
 	lgr repository.LogicRepo,
 	lsr repository.LogicServiceRepo,
 	tpr repository.TopicRepo,
@@ -22,7 +22,7 @@ func NewRegistUsecase(sir repository.SinkRepo,
 	return &registUsecase{
 		sir: sir,
 		ndr: ndr,
-		snr: snr,
+		// snr: snr,
 		lgr: lgr,
 		lsr: lsr,
 		tpr: tpr,

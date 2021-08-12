@@ -16,8 +16,8 @@ func NewLogicRepo() *logicRepo {
 	}
 }
 
-func (lgr *logicRepo) FindsWithSensorValues() (ll []model.Logic, err error) {
-	return ll, lgr.db.Preload("Sensor").Find(&ll).Error
+func (lgr *logicRepo) FindsWithNodeValues() (ll []model.Logic, err error) {
+	return ll, lgr.db.Preload("Node").Find(&ll).Error
 }
 
 func (lgr *logicRepo) Create(l *model.Logic) error {

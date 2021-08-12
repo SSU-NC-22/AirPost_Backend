@@ -35,7 +35,7 @@ type Logic struct {
 }
 
 func (ls *Logic) Getenv() {
-	GetenvStr(&ls.Server, "10.5.110.33:8084", "LOGIC_SERVER")
+	GetenvStr(&ls.Server, "10.5.110.23:8084", "LOGIC_SERVER")
 	GetenvStr(&ls.Listen, ls.Server, "LOGIC_LISTEN")
 }
 
@@ -56,7 +56,7 @@ func (as *App) Getenv() {
 		}
 	*/
 	if as.Server == "" {
-		as.Server = "10.5.110.33:8081"
+		as.Server = "10.5.110.23:8081"
 		// as.Server = "220.70.2.5:8081"
 	}
 
@@ -75,7 +75,7 @@ type Kafka struct {
 }
 
 func (ks *Kafka) Getenv() {
-	GetenvStr(&ks.Broker, "10.5.110.33:9092", "KAFKA_BROKER") //"localhost:9092", "KAFKA_BROKER")
+	GetenvStr(&ks.Broker, "10.5.110.23:9092", "KAFKA_BROKER") //"localhost:9092", "KAFKA_BROKER")
 	GetenvStr(&ks.GroupID, "logic1", "KAFKA_GROUP")
 	ks.Topics = []string{os.Getenv("KAFKA_TOPIC")}
 	if ks.Topics[0] == "" {
@@ -100,7 +100,7 @@ type Elastic struct {
 func (es *Elastic) Getenv() {
 	temp := os.Getenv("ELASTIC_SERVER")
 	if temp == "" {
-		temp = "10.5.110.33:9200" //"localhost:9200"
+		temp = "10.5.110.23:9200" //"localhost:9200"
 	}
 	es.Addresses = []string{fmt.Sprintf("http://%s", temp)}
 	GetenvInt(&es.RequestRetry, 3, "ELASTIC_RETRY")
