@@ -51,10 +51,7 @@ func (h *Handler) ListSinks(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		fmt.Println("\n	----- sinks -----")
-		fmt.Println(sinks)
 		c.JSON(http.StatusOK, sinks)
-		fmt.Println("\n----- handler ListSinks func fin -----")
 		return
 	}
 }
@@ -75,11 +72,13 @@ func (h *Handler) RegistSink(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	err := h.ru.RegistSink(&sink)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	h.eu.CreateSinkEvent(&sink)
 	c.JSON(http.StatusOK, sink)
 }
@@ -139,7 +138,7 @@ func (h *Handler) ListNodes(c *gin.Context) {
 	)
 
 	if c.Bind(&page); page.IsBinded() {
-		fmt.Println("\n	----- page -----")
+		fmt.Println("\n\t----- page -----")
 		fmt.Println(page)
 		if page.Size == 0 {
 			page.Size = 10
@@ -151,12 +150,12 @@ func (h *Handler) ListNodes(c *gin.Context) {
 		if page.Page == 1 {
 			pages = h.ru.GetNodePageCount(page)
 		}
-		fmt.Println("\n	----- nodes -----")
+		fmt.Println("\n\t----- nodes -----")
 		fmt.Println(nodes)
 		c.JSON(http.StatusOK, gin.H{"nodes": nodes, "pages": pages})
 		fmt.Println("\n----- handler ListNodes func fin -----")
 		return
-	} else if c.Bind((&square)); square.IsBinded() {
+	} else if c.Bind((&square)); square.IsBinded() { // map
 		if nodes, err = h.ru.GetNodesSquare(square); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -173,6 +172,23 @@ func (h *Handler) ListNodes(c *gin.Context) {
 		return
 	}
 
+}
+
+// ListNodesBySink ...
+func (h *Handler) ListNodesBySink(c *gin.Context) {
+	fmt.Println("\n----- handler ListNodesBySink func start -----")
+	sinkid, err := strconv.Atoi(c.Param("sinkid"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	nodes, err := h.ru.GetNodesBySinkID(sinkid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, nodes)
 }
 
 // RegistNode ...

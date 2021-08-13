@@ -23,7 +23,6 @@ func main() {
 
 	sir := sql.NewSinkRepo()
 	ndr := sql.NewNodeRepo()
-	// snr := sql.NewSensorRepo()
 	lgr := sql.NewLogicRepo()
 	lsr := sql.NewLogicServiceRepo()
 	tpr := sql.NewTopicRepo()
@@ -74,15 +73,10 @@ func setRegistrationRoute(r *gin.Engine, h *handler.Handler) {
 		node := regist.Group("/node")
 		{
 			node.GET("", h.ListNodes)
+			node.GET("/:sinkid", h.ListNodesBySink)
 			node.POST("", h.RegistNode)
 			node.DELETE("/:id", h.UnregistNode)
 		}
-		// sensor := regist.Group("/sensor")
-		// {
-		// 	sensor.GET("", h.ListSensors)
-		// 	sensor.POST("", h.RegistSensor)
-		// 	sensor.DELETE("/:id", h.UnregistSensor)
-		// }
 		actuator := regist.Group("/actuator")
 		{
 			actuator.GET("", h.ListActuators)
