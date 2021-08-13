@@ -10,6 +10,7 @@ type registUsecase struct {
 	lsr repository.LogicServiceRepo
 	tpr repository.TopicRepo
 	acr repository.ActuatorRepo
+	dlr repository.DeliveryRepo
 }
 
 func NewRegistUsecase(sir repository.SinkRepo,
@@ -18,7 +19,8 @@ func NewRegistUsecase(sir repository.SinkRepo,
 	lgr repository.LogicRepo,
 	lsr repository.LogicServiceRepo,
 	tpr repository.TopicRepo,
-	acr repository.ActuatorRepo) *registUsecase {
+	acr repository.ActuatorRepo,
+	dlr repository.DeliveryRepo) *registUsecase {
 	return &registUsecase{
 		sir: sir,
 		ndr: ndr,
@@ -27,5 +29,6 @@ func NewRegistUsecase(sir repository.SinkRepo,
 		lsr: lsr,
 		tpr: tpr,
 		acr: acr,
+		dlr: dlr,
 	}
 }

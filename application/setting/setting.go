@@ -1,3 +1,4 @@
+// AirPost
 package setting
 
 import (
@@ -26,7 +27,7 @@ type App struct {
 func (as *App) Getenv() {
 	as.Server = os.Getenv("APP_SERVER")
 	if as.Server == "" {
-		as.Server = "10.5.110.23:8081"
+		as.Server = "221.140.150.7:8081"
 	}
 }
 

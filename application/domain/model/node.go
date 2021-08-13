@@ -14,6 +14,7 @@ func (Sink) TableName() string {
 	return "sinks"
 }
 
+// modified
 type Node struct {
 	ID				int				`json:"id" gorm:"primaryKey"`
 	Name			string			`json:"name" gorm:"type:varchar(32);unique;not null"`

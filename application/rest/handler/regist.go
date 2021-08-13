@@ -25,6 +25,7 @@ import (
 // @Success 201 {object} adapter.SinkPage "if page query is exist, return pagenation result. pages only valid when page is 1."
 // @Router /regist/sink [get]
 func (h *Handler) ListSinks(c *gin.Context) {
+	fmt.Println("\n----- handler ListSinks func start -----")
 	var (
 		err   error
 		sinks []model.Sink
@@ -71,11 +72,13 @@ func (h *Handler) RegistSink(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
 	err := h.ru.RegistSink(&sink)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	h.eu.CreateSinkEvent(&sink)
 	c.JSON(http.StatusOK, sink)
 }
@@ -135,6 +138,8 @@ func (h *Handler) ListNodes(c *gin.Context) {
 	)
 
 	if c.Bind(&page); page.IsBinded() {
+		fmt.Println("\n\t----- page -----")
+		fmt.Println(page)
 		if page.Size == 0 {
 			page.Size = 10
 		}
@@ -145,12 +150,12 @@ func (h *Handler) ListNodes(c *gin.Context) {
 		if page.Page == 1 {
 			pages = h.ru.GetNodePageCount(page)
 		}
-		fmt.Println("\n	----- nodes -----")
+		fmt.Println("\n\t----- nodes -----")
 		fmt.Println(nodes)
 		c.JSON(http.StatusOK, gin.H{"nodes": nodes, "pages": pages})
 		fmt.Println("\n----- handler ListNodes func fin -----")
 		return
-	} else if c.Bind((&square)); square.IsBinded() {
+	} else if c.Bind((&square)); square.IsBinded() { // map
 		if nodes, err = h.ru.GetNodesSquare(square); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -169,6 +174,23 @@ func (h *Handler) ListNodes(c *gin.Context) {
 
 }
 
+// ListNodesBySink ...
+func (h *Handler) ListNodesBySink(c *gin.Context) {
+	fmt.Println("\n----- handler ListNodesBySink func start -----")
+	sinkid, err := strconv.Atoi(c.Param("sinkid"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	nodes, err := h.ru.GetNodesBySinkID(sinkid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, nodes)
+}
+
 // RegistNode ...
 // @Summary Add sensor node
 // @Description Add sensor node
@@ -185,6 +207,8 @@ func (h *Handler) RegistNode(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	fmt.Println("\n\t----- node -----")
+	fmt.Println(node)
 	err := h.ru.RegistNode(&node)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -225,103 +249,6 @@ func (h *Handler) UnregistNode(c *gin.Context) {
 	go h.eu.PostToSink(node.SinkID)
 	c.JSON(http.StatusOK, node)
 }
-
-/**************************************************************/
-/* Sensor handler                                             */
-/**************************************************************/
-// ListSensors ...
-// @Summary List sensor info
-// @Description get sensors list
-// @Tags sensor
-// @Param  page query int false "page num"
-// @Param  size query int false "page size(row)"
-// @Produce  json
-// @Success 200 {array} model.Sensor "default, return all sensors."
-// @Success 201 {object} adapter.SensorPage "if page query is exist, return pagenation result. pages only valid when page is 1."
-// @Router /regist/sensor [get]
-// func (h *Handler) ListSensors(c *gin.Context) {
-// 	var (
-// 		err     error
-// 		sensors []model.Sensor
-// 		page    adapter.Page
-// 		pages   int
-// 	)
-
-// 	if c.Bind(&page); page.IsBinded() {
-// 		if page.Size == 0 {
-// 			page.Size = 10
-// 		}
-// 		if sensors, err = h.ru.GetSensorsPage(page); err != nil {
-// 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 			return
-// 		}
-// 		if page.Page == 1 {
-// 			pages = h.ru.GetSensorPageCount(page.Size)
-// 		}
-// 		c.JSON(http.StatusOK, gin.H{"sensors": sensors, "pages": pages})
-// 		return
-// 	} else {
-// 		sensors, err := h.ru.GetSensors()
-// 		if err != nil {
-// 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 			return
-// 		}
-// 		c.JSON(http.StatusOK, sensors)
-// 		return
-// 	}
-
-// }
-
-// RegistSensor ...
-// @Summary Add sensor info
-// @Description Add sensor info
-// @Tags sensor
-// @Param  sensor body model.Sensor true "name, sensorValues(only value name)"
-// @Accept  json
-// @Produce  json
-// @Success 200 {object} model.Node "include sensorValues info"
-// @Router /regist/sensor [post]
-// func (h *Handler) RegistSensor(c *gin.Context) {
-// 	var sensor model.Sensor
-// 	if err := c.ShouldBindJSON(&sensor); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	err := h.ru.RegistSensor(&sensor)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-// 	c.JSON(http.StatusOK, sensor)
-// }
-
-// UnregistSensor ...
-// @Summary Delete sensor
-// @Description Delete sensor
-// @Tags sensor
-// @Param  id path int true "sensor's id"
-// @Accept  json
-// @Produce  json
-// @Success 200 {object} model.Sensor "include logics info"
-// @Router /regist/sensor [delete]
-// func (h *Handler) UnregistSensor(c *gin.Context) {
-// 	id, err := strconv.Atoi(c.Param("id"))
-// 	if err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-// 	sensor := model.Sensor{ID: id}
-
-// 	err = h.ru.UnregistSensor(&sensor)
-// 	if err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	h.eu.DeleteSensorEvent(&sensor)
-// 	c.JSON(http.StatusOK, sensor)
-// }
 
 /**************************************************************/
 /* Actuator handler                                           */
@@ -587,4 +514,34 @@ func (h *Handler) UnregistTopic(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, topic)
+}
+
+/**************************************************************/
+/* Delivery service handler                                   */
+/**************************************************************/
+// RegistDelivery ...
+// @Summary Add delivery info
+// @Description Add delivery info
+// @Tags delivery
+// @Param  
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} model.Delivery
+// @Router /regist/delivery [post]
+func (h *Handler) RegistDelivery(c *gin.Context) {
+	fmt.Println("\n----- handler RegistDelivery func start -----")
+	var delivery model.Delivery
+	if err := c.ShouldBindJSON(&delivery); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := h.ru.RegistDelivery(&delivery)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, delivery)
+	fmt.Println("\n----- handler RegistDelivery func fin -----")
 }

@@ -55,6 +55,10 @@ func (ru *registUsecase) GetNodesSquare(sq adapter.Square) ([]model.Node, error)
 	return ru.ndr.FindsSquare(sq)
 }
 
+func (ru *registUsecase) GetNodesBySinkID(sinkid int) ([]model.Node, error) {
+	return ru.ndr.FindsBySinkIDWithSensorValues(sinkid)
+}
+
 func (ru *registUsecase) RegistNode(n *model.Node) error {
 	return ru.ndr.Create(n)
 }

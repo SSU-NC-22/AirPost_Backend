@@ -1,5 +1,6 @@
 package model
 
+// modified
 type Logic struct {
 	ID		int		`json:"id" gorm:"primaryKey"`
 	Name	string	`json:"name" gorm:"type:varchar(32);unique;not null"`

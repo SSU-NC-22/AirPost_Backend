@@ -20,17 +20,10 @@ type NodeRepo interface {
 	FindsWithSensorsValues() ([]model.Node, error)
 	FindsPage(p adapter.Page) (nl []model.Node, err error)
 	FindsSquare(sq adapter.Square) (nl []model.Node, err error)
+	FindsBySinkIDWithSensorValues(sinkid int) (nl []model.Node, err error)
 	Create(*model.Node) error
 	Delete(*model.Node) error
 }
-
-// type SensorRepo interface {
-// 	GetPages(size int) int
-// 	FindsWithValues() ([]model.Sensor, error)
-// 	FindsPage(p adapter.Page) ([]model.Sensor, error)
-// 	Create(*model.Sensor) error
-// 	Delete(*model.Sensor) error
-// }
 
 type ActuatorRepo interface {
 	GetPages(size int) int
@@ -59,4 +52,9 @@ type TopicRepo interface {
 	FindsWithLogicService() ([]model.Topic, error)
 	Create(*model.Topic) error
 	Delete(*model.Topic) error
+}
+
+type DeliveryRepo interface {
+	Create(*model.Delivery) error
+	Delete(*model.Delivery) error
 }

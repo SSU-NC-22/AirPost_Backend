@@ -19,6 +19,7 @@ type Node struct {
 type Location struct {
 	Lat float64 `json:"lat"`
 	Lon float64 `json:"lon"`
+	Alt float64 `json:"alt"`
 }
 
 type Square struct {
@@ -26,13 +27,6 @@ type Square struct {
 	Right float64 `form:"right" json:"right"`
 	Up    float64 `form:"up" json:"up"`
 	Down  float64 `form:"down" json:"down"`
-}
-
-type Motor struct {
-	Motor1 float64 `json:"motor1"`
-	Motor2 float64 `json:"motor2"`
-	Motor3 float64 `json:"motor3"`
-	Motor4 float64 `json:"motor4"`
 }
 
 func (sq Square) IsBinded() bool {
@@ -46,16 +40,13 @@ func (sq Square) IsBinded() bool {
 /* Page adapter                                               */
 /**************************************************************/
 type Page struct {
-	Page int `form:"page" json:"page"`
-	Sink int `form:"sink" json:"sink"`
-	Size int `form:"size" json:"size"`
+	Page int `form:"page" json:"page"` // 현재 page 넘버
+	Sink int `form:"sink" json:"sink"` // 해당 node의 sink
+	Size int `form:"size" json:"size"` // 0 -> 10 ?
 }
 
 func (p Page) IsBinded() bool {
-	if p.Page != 0 {
-		return true
-	}
-	return false
+	return p.Page != 0
 }
 
 func (p Page) GetOffset() int {
