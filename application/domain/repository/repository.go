@@ -20,6 +20,7 @@ type NodeRepo interface {
 	FindsWithSensorsValues() ([]model.Node, error)
 	FindsPage(p adapter.Page) (nl []model.Node, err error)
 	FindsSquare(sq adapter.Square) (nl []model.Node, err error)
+	FindsBySinkIDWithSensorValues(sinkid int) (nl []model.Node, err error)
 	Create(*model.Node) error
 	Delete(*model.Node) error
 }

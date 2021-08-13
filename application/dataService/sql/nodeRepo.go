@@ -46,6 +46,10 @@ func (ndr *nodeRepo) FindsSquare(sq adapter.Square) (nl []model.Node, err error)
 	return nl, ndr.db.Where("loc_lon BETWEEN ? AND ?", sq.Left, sq.Right).Where("loc_lat BETWEEN ? AND ?", sq.Down, sq.Up).Preload("SensorValues", orderByASC).Find(&nl).Error
 }
 
+func (ndr *nodeRepo) FindsBySinkIDWithSensorValues(sinkid int) (nl []model.Node, err error) {
+	return nl, ndr.db.Where("sink_id=?", sinkid).Preload("SensorValues", orderByASC).Find(&nl).Error
+}
+
 func (ndr *nodeRepo) Create(n *model.Node) error {
 	return ndr.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Omit("SensorValues").Omit("Logics").Create(n).Error; err != nil {
