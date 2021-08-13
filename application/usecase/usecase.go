@@ -19,6 +19,7 @@ type RegistUsecase interface {
 	GetNodes() ([]model.Node, error)
 	GetNodesPage(p adapter.Page) ([]model.Node, error)
 	GetNodesSquare(sq adapter.Square) ([]model.Node, error)
+	GetNodesBySinkID(sinkid int) ([]model.Node, error)
 	RegistNode(n *model.Node) error
 	UnregistNode(n *model.Node) error
 
