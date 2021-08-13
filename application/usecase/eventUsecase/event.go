@@ -1,6 +1,7 @@
 package eventUsecase
 
 import (
+	"fmt"
 	"log"
 	"sync"
 
@@ -9,6 +10,7 @@ import (
 )
 
 func waitRespGroup(e EVENT, body interface{}, ll []model.LogicService) (prl []pingRequest) {
+	fmt.Println("\n\t---------- Event waitRespGroup start ----------")
 	var wg sync.WaitGroup // 고루틴이 종료될 때까지 대기
 	for _, l := range ll {
 		wg.Add(1) // WaitGroup에 대기 중인 고루틴 개수 추가
@@ -84,21 +86,6 @@ func (eu *eventUsecase) DeleteNodeEvent(n *model.Node) error {
 
 	return nil
 }
-
-/**************************************************************/
-/* sensor event usecase                                       */
-/**************************************************************/
-// func (eu *eventUsecase) DeleteSensorEvent(s *model.Sensor) error {
-// 	e := DeleteSensor
-
-// 	ll, err := eu.lsr.Finds()
-// 	if err != nil {
-// 		return err
-// 	}
-// 	eu.requestRetry = append(eu.requestRetry, waitRespGroup(e, *s, ll)...)
-
-// 	return nil
-// }
 
 /**************************************************************/
 /* logic event usecase                                         */

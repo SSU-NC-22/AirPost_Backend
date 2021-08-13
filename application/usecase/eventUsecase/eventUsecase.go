@@ -118,10 +118,12 @@ func (pr *pingRequest) ping() error {
 /* sink event usecase                                         */
 /**************************************************************/
 func (eu *eventUsecase) PostToSink(sid int) error {
+	fmt.Println("\n\t---------- Event PostToSink start ----------")
 	if sink, err := eu.sir.FindByIDWithNodesSensorsValuesTopic(sid); err != nil {
 		return err
 	} else {
 		url := fmt.Sprintf("http://%s:5000/topics", sink.Addr)
+		fmt.Println("\turl :\t", url)
 		client := resty.New()
 		client.R().SetBody(*sink).Post(url)
 		return nil
