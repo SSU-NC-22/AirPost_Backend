@@ -28,8 +28,9 @@ func main() {
 	lsr := sql.NewLogicServiceRepo()
 	tpr := sql.NewTopicRepo()
 	acr := sql.NewActuatorkRepo()
+	dlr := sql.NewDeliveryRepo()
 
-	ru := registUsecase.NewRegistUsecase(sir, ndr, lgr, lsr, tpr, acr)
+	ru := registUsecase.NewRegistUsecase(sir, ndr, lgr, lsr, tpr, acr, dlr)
 	eu := eventUsecase.NewEventUsecase(sir, lsr)
 
 	h := handler.NewHandler(ru, eu)
@@ -104,6 +105,10 @@ func setRegistrationRoute(r *gin.Engine, h *handler.Handler) {
 			topic.GET("", h.ListTopics)
 			topic.POST("", h.RegistTopic)
 			topic.DELETE("/:id", h.UnregistTopic)
+		}
+		delivery := regist.Group("/delivery")
+		{
+			delivery.POST("", h.RegistDelivery)
 		}
 	}  
 }

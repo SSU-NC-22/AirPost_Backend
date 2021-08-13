@@ -22,12 +22,6 @@ type RegistUsecase interface {
 	RegistNode(n *model.Node) error
 	UnregistNode(n *model.Node) error
 
-	// GetSensorPageCount(size int) int
-	// GetSensors() ([]model.Sensor, error)
-	// GetSensorsPage(p adapter.Page) ([]model.Sensor, error)
-	// RegistSensor(s *model.Sensor) error
-	// UnregistSensor(s *model.Sensor) error
-
 	GetActuatorPageCount(size int) int
 	GetActuators() ([]model.Actuator, error)
 	GetActuatorsPage(p adapter.Page) ([]model.Actuator, error)
@@ -44,6 +38,9 @@ type RegistUsecase interface {
 	GetTopics() ([]model.Topic, error)
 	RegistTopic(t *model.Topic) error
 	UnregistTopic(t *model.Topic) error
+
+	RegistDelivery(d *model.Delivery) error
+	// UnregistDelivery(d *model.Delivery) error
 }
 
 // for event channel

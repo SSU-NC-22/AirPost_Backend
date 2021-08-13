@@ -24,14 +24,6 @@ type NodeRepo interface {
 	Delete(*model.Node) error
 }
 
-// type SensorRepo interface {
-// 	GetPages(size int) int
-// 	FindsWithValues() ([]model.Sensor, error)
-// 	FindsPage(p adapter.Page) ([]model.Sensor, error)
-// 	Create(*model.Sensor) error
-// 	Delete(*model.Sensor) error
-// }
-
 type ActuatorRepo interface {
 	GetPages(size int) int
 	FindsWithName() ([]model.Actuator, error)
@@ -59,4 +51,9 @@ type TopicRepo interface {
 	FindsWithLogicService() ([]model.Topic, error)
 	Create(*model.Topic) error
 	Delete(*model.Topic) error
+}
+
+type DeliveryRepo interface {
+	Create(*model.Delivery) error
+	Delete(*model.Delivery) error
 }
