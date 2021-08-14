@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
+	"math/rand"
 
 	"github.com/eunnseo/AirPost/application/adapter"
 	"github.com/eunnseo/AirPost/application/domain/model"
@@ -73,7 +75,7 @@ func (h *Handler) RegistSink(c *gin.Context) {
 		return
 	}
 
-	err := h.ru.RegistSink(&sink)
+	err := h.ru.RegistSink(&sink) // sink.Topic 내용 채워짐
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -531,10 +533,21 @@ func (h *Handler) UnregistTopic(c *gin.Context) {
 func (h *Handler) RegistDelivery(c *gin.Context) {
 	fmt.Println("\n----- handler RegistDelivery func start -----")
 	var delivery model.Delivery
+	delivery.CreatedAt = time.Now()
+
 	if err := c.ShouldBindJSON(&delivery); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// create order_num (date + src node id + dest node id + random)
+	t := delivery.CreatedAt.String()
+	date := t[2:4] + t[5:7] + t[8:10]
+	srcid := fmt.Sprintf("%03d", delivery.SrcNodeID)
+	destid := fmt.Sprintf("%03d", delivery.DestNodeID)
+	timeSource := rand.NewSource(time.Now().UnixNano())
+	random := fmt.Sprintf("%03d", rand.New(timeSource).Intn(999))
+	delivery.OrderNum = date + srcid + destid + random
 
 	err := h.ru.RegistDelivery(&delivery)
 	if err != nil {
