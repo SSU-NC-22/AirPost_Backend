@@ -50,6 +50,10 @@ func main() {
 	setEventRoute(r, h)
 	initTopic(tpr)
 
+	initDroneSink(sir)
+	initStationSink(sir)
+	initTagSink(sir)
+
 	log.Fatal(r.Run(setting.Appsetting.Server))
 }
 
@@ -117,3 +121,38 @@ func initTopic(tpr repository.TopicRepo) {
 		tpr.Create(&t)
 	}
 }
+
+func initDroneSink(sir repository.SinkRepo) {
+	if setting.DroneSinksetting.Name != "" {
+		s := model.Sink{
+			Name:		setting.DroneSinksetting.Name,
+			Addr:		setting.DroneSinksetting.Addr,
+			TopicID:	setting.DroneSinksetting.TopicID,
+		}
+		sir.Create(&s)
+	}
+}
+
+func initStationSink(sir repository.SinkRepo) {
+	if setting.StationSinksetting.Name != "" {
+		s := model.Sink{
+			Name:		setting.StationSinksetting.Name,
+			Addr:		setting.StationSinksetting.Addr,
+			TopicID:	setting.StationSinksetting.TopicID,
+		}
+		sir.Create(&s)
+	}
+}
+
+func initTagSink(sir repository.SinkRepo) {
+	if setting.TagSinksetting.Name != "" {
+		s := model.Sink{
+			Name:		setting.TagSinksetting.Name,
+			Addr:		setting.TagSinksetting.Addr,
+			TopicID:	setting.TagSinksetting.TopicID,
+		}
+		sir.Create(&s)
+	}
+}
+
+// Need to start Sink Event Function

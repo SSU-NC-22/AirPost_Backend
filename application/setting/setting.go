@@ -20,6 +20,7 @@ func GetenvInt(target *int, init int, env string) {
 	}
 }
 
+/* App setting */
 type App struct {
 	Server string
 }
@@ -33,6 +34,7 @@ func (as *App) Getenv() {
 
 var Appsetting = &App{}
 
+/* Database setting */
 type Database struct {
 	Driver   string `toml:"driver"`
 	Server   string `toml:"tcp"`
@@ -66,6 +68,7 @@ func (ds *Database) Getenv() {
 
 var Databasesetting = &Database{}
 
+/* Topic setting */
 type Topic struct {
 	Name         string
 	Partitions   int
@@ -83,10 +86,75 @@ func (ts *Topic) Getenv() {
 
 var Topicsetting = &Topic{}
 
+/* Sink setting */
+type DroneSink struct {
+	Name		string
+	Addr		string
+	TopicID		int
+}
+
+func (ss *DroneSink) Getenv() {
+	ss.Name = os.Getenv("SINK_NAME")
+	if ss.Name == "" {
+		ss.Name = "drone-sink"
+	}
+	ss.Addr = os.Getenv("SINK_ADDR")
+	if ss.Addr == "" {
+		ss.Addr = "111.111.111:8080"
+	}
+	GetenvInt(&ss.TopicID, 1, "SINK_TOPICID")
+}
+
+var DroneSinksetting = &DroneSink{}
+
+type StationSink struct {
+	Name		string
+	Addr		string
+	TopicID		int
+}
+
+func (ss *StationSink) Getenv() {
+	ss.Name = os.Getenv("SINK_NAME")
+	if ss.Name == "" {
+		ss.Name = "station-sink"
+	}
+	ss.Addr = os.Getenv("SINK_ADDR")
+	if ss.Addr == "" {
+		ss.Addr = "222.222.222:8080"
+	}
+	GetenvInt(&ss.TopicID, 1, "SINK_TOPICID")
+}
+
+var StationSinksetting = &StationSink{}
+
+type TagSink struct {
+	Name		string
+	Addr		string
+	TopicID		int
+}
+
+func (ss *TagSink) Getenv() {
+	ss.Name = os.Getenv("SINK_NAME")
+	if ss.Name == "" {
+		ss.Name = "tag-sink"
+	}
+	ss.Addr = os.Getenv("SINK_ADDR")
+	if ss.Addr == "" {
+		ss.Addr = "333.333.333:8080"
+	}
+	GetenvInt(&ss.TopicID, 1, "SINK_TOPICID")
+}
+
+var TagSinksetting = &TagSink{}
+
+
 func init() {
 	Appsetting.Getenv()
 	Databasesetting.Getenv()
 	Topicsetting.Getenv()
+	DroneSinksetting.Getenv()
+	StationSinksetting.Getenv()
+	TagSinksetting.Getenv()
 
 	log.Printf("app : %v\ndb : %v\n", Appsetting, Databasesetting)
 }
