@@ -44,6 +44,9 @@ type registRepo struct {
 	nodeInfoRepo
 }
 
+/**************************************************************/
+/* Node Regist Repo                                           */
+/**************************************************************/
 type nodeRepo struct {
 	nmu   *sync.RWMutex
 	ninfo map[int]model.Node
@@ -62,8 +65,6 @@ func (nir *nodeInfoRepo) AppendNodeMap(nid int, sid int) error {
 	if ok {
 		return errors.New("nodeInfoRepo: already exist nid")
 	}
-	// var ni model.Nodeinfo
-	// ni.SinkID = sid
 	ni := model.Nodeinfo{SinkID: sid}
 
 	nir.ninfo[nid] = ni
@@ -85,6 +86,9 @@ func (nir *nodeInfoRepo) GetSid(nid int) (*model.Nodeinfo, error) {
 	return &n, nil
 }
 
+/**************************************************************/
+/* Sink Regist Repo                                           */
+/**************************************************************/
 type sinkAddrRepo struct {
 	samu  *sync.RWMutex
 	addrs map[int]model.Sink
@@ -120,39 +124,39 @@ func (nr *nodeRepo) DeleteNode(key int) error {
 	return nil
 }
 
-type sensorRepo struct {
-	smu   *sync.RWMutex
-	sinfo map[int]model.Sensor
-}
+// type sensorRepo struct {
+// 	smu   *sync.RWMutex
+// 	sinfo map[int]model.Sensor
+// }
 
-func (sr *sensorRepo) FindSensor(key int) (*model.Sensor, error) {
-	sr.smu.RLock()
-	defer sr.smu.RUnlock()
+// func (sr *sensorRepo) FindSensor(key int) (*model.Sensor, error) {
+// 	sr.smu.RLock()
+// 	defer sr.smu.RUnlock()
 
-	s, ok := sr.sinfo[key]
-	if !ok {
-		return nil, errors.New("nodeRepo: cannot find sensor")
-	}
-	return &s, nil
-}
+// 	s, ok := sr.sinfo[key]
+// 	if !ok {
+// 		return nil, errors.New("nodeRepo: cannot find sensor")
+// 	}
+// 	return &s, nil
+// }
 
-func (sr *sensorRepo) CreateSensor(key int, s *model.Sensor) error {
-	_, ok := sr.sinfo[key]
-	if ok {
-		return errors.New("nodeRepo: already exist sensor")
-	}
-	sr.sinfo[key] = *s
-	return nil
-}
+// func (sr *sensorRepo) CreateSensor(key int, s *model.Sensor) error {
+// 	_, ok := sr.sinfo[key]
+// 	if ok {
+// 		return errors.New("nodeRepo: already exist sensor")
+// 	}
+// 	sr.sinfo[key] = *s
+// 	return nil
+// }
 
-func (sr *sensorRepo) DeleteSensor(key int) error {
-	_, ok := sr.sinfo[key]
-	if !ok {
-		return errors.New("nodeRepo: cannot find sensor")
-	}
-	delete(sr.sinfo, key)
-	return nil
-}
+// func (sr *sensorRepo) DeleteSensor(key int) error {
+// 	_, ok := sr.sinfo[key]
+// 	if !ok {
+// 		return errors.New("nodeRepo: cannot find sensor")
+// 	}
+// 	delete(sr.sinfo, key)
+// 	return nil
+// }
 
 func (sar *sinkAddrRepo) AppendSinkAddr(sid int, s *string) error {
 	sar.samu.RLock()
@@ -167,10 +171,3 @@ func (sar *sinkAddrRepo) AppendSinkAddr(sid int, s *string) error {
 	log.Println("test >>>>>> in memory/appendSinkAddr, sinkID : ", sid, "sinkADDR : ", *s)
 	return nil
 }
-
-// func (sar *sinkAddrRepo) GetSinkAddrMap() *map[int]model.Sink {
-// 	sar.samu.RLock()
-// 	defer sar.samu.RUnlock()
-
-// 	return &sar.addrs
-// }
