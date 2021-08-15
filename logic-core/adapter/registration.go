@@ -39,10 +39,10 @@ import (
 // action : delete Logic
 
 type Logic struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	Elems    string `json:"elems"`
-	SensorID int    `json:"sensor_id"`
+	ID		int    `json:"id"`
+	Name	string `json:"name"`
+	Elems	string `json:"elems"`
+	NodeID	int    `json:"node_id"`	// original name was SensorID
 }
 
 func LogicToModel(l *Logic) (model.Logic, error) {
@@ -54,7 +54,7 @@ func LogicToModel(l *Logic) (model.Logic, error) {
 			ID:        l.ID,
 			LogicName: l.Name,
 			Elems:     elems,
-			SensorID:  l.SensorID,
+			NodeID:    l.NodeID,
 		}, nil
 	}
 }
@@ -69,52 +69,59 @@ func LogicsToModels(ll []Logic) []model.Logic {
 	return res
 }
 
-type Sensor struct {
-	ID           int           `json:"id"`
-	Name         string        `json:"name"`
-	SensorValues []SensorValue `json:"sensor_values"`
-	Logics       []Logic       `json:"logics"`
-}
+// type Sensor struct {
+// 	ID           int           `json:"id"`
+// 	Name         string        `json:"name"`
+// 	SensorValues []SensorValue `json:"sensor_values"`
+// 	Logics       []Logic       `json:"logics"`
+// }
 
 type SensorValue struct {
-	SensorID  int    `json:"sensor_id"`
-	ValueName string `json:"value_name"`
-	Index     int    `json:"index"`
+	NodeID		int    `json:"node_id"`		// original name was SensorID
+	ValueName	string `json:"value_name"`
+	Index		int    `json:"index"`
 }
 
-func SensorToModel(s *Sensor) (model.Sensor, []Logic) {
-	sv := make([]string, len(s.SensorValues))
-	for i, v := range s.SensorValues {
-		sv[i] = v.ValueName
-	}
-	return model.Sensor{
-		Name:         s.Name,
-		SensorValues: sv,
-	}, s.Logics
-}
+// func SensorToModel(s *Sensor) (model.Sensor, []Logic) {
+// 	sv := make([]string, len(s.SensorValues))
+// 	for i, v := range s.SensorValues {
+// 		sv[i] = v.ValueName
+// 	}
+// 	return model.Sensor{
+// 		Name:         s.Name,
+// 		SensorValues: sv,
+// 	}, s.Logics
+// }
 
 type Node struct {
-	ID      int      `json:"id"`
-	Name    string   `json:"name"`
-	LocLat  float64  `json:"lat"`
-	LocLon  float64  `json:"lng"`
-	SinkID  int      `json:"sink_id"`
-	Sink    Sink     `json:"sink"`
-	Sensors []Sensor `json:"sensors"`
+	ID				int				`json:"id"`
+	Name			string			`json:"name"`
+	LocLat			float64			`json:"lat"`
+	LocLon			float64			`json:"lng"`
+	LocAlt			float64			`json:"alt"`
+	SinkID			int				`json:"sink_id"`
+	Sink			Sink			`json:"sink"`
+	SensorValues	[]SensorValue	`json:"sensor_values"`
+	Logics			[]Logic			`json:"logics"`
 }
 
-func NodeToModel(n *Node, sn string) (model.Node, []Sensor) {
-
+func NodeToModel(n *Node, sn string) (model.Node, []Logic) {
+	sv := make([]string, len(n.SensorValues))
+	for i, v := range n.SensorValues {
+		sv[i] = v.ValueName
+	}
 	return model.Node{
 		Name: n.Name,
 		Location: model.Location{
 			Lat: n.LocLat,
 			Lon: n.LocLon,
+			Alt: n.LocAlt,
 		},
-		SinkName: sn,
-		Sid:      n.SinkID,
-		Nid:      n.ID,
-	}, n.Sensors
+		SinkName:     sn,
+		Sid:          n.SinkID,
+		Nid:          n.ID,
+		SensorValues: sv,
+	}, n.Logics
 }
 
 type Sink struct {

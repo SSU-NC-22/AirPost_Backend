@@ -4,8 +4,8 @@ type Node struct {
 	Name			string		`json:"name"`
 	Location		Location	`json:"location"`
 	SinkName		string		`json:"sink_name"`
-	Nid				int			`json:"nid"`
-	Sid				int			`json:"sid"`
+	Sid				int			`json:"sid"`	// sink id
+	Nid				int			`json:"nid"`	// node id
 	SensorValues	[]string	`json:"sensor_values"`
 }
 

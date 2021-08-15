@@ -17,7 +17,7 @@ func init() {
 }
 
 type KafkaData struct {
-	SensorID  int       `json:"sensor_id"`
+	// SensorID  int       `json:"sensor_id"`
 	NodeID    int       `json:"node_id"`
 	Values    []float64 `json:"values"`
 	Timestamp string    `json:"timestamp"`
@@ -29,7 +29,7 @@ func KafkaToModel(d *KafkaData) (model.KafkaData, error) {
 		return model.KafkaData{}, err
 	}
 	return model.KafkaData{
-		SensorID:  d.SensorID,
+		// SensorID:  d.SensorID,
 		NodeID:    d.NodeID,
 		Values:    d.Values,
 		Timestamp: t,
