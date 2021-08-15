@@ -94,18 +94,18 @@ func (h *Handler) DeleteNode(c *gin.Context) {
 /**************************************************************/
 /* Snesor handler                                               */
 /**************************************************************/
-func (h *Handler) DeleteSensor(c *gin.Context) {
-	var as adapter.Sensor
-	if err := c.ShouldBindJSON(&as); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	if err := h.evuc.DeleteSensor(&as); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, as)
-}
+// func (h *Handler) DeleteSensor(c *gin.Context) {
+// 	var as adapter.Sensor
+// 	if err := c.ShouldBindJSON(&as); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+// 	if err := h.evuc.DeleteSensor(&as); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+// 		return
+// 	}
+// 	c.JSON(http.StatusOK, as)
+// }
 
 /**************************************************************/
 /* Logic handler                                              */
