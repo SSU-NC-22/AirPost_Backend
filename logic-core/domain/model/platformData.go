@@ -8,7 +8,7 @@ import (
 )
 
 type KafkaData struct {
-	SensorID  int       `json:"sensor_id"`
+	// SensorID  int       `json:"sensor_id"`
 	NodeID    int       `json:"node_id"`
 	Values    []float64 `json:"values"`
 	Timestamp time.Time `json:"timestamp"`
