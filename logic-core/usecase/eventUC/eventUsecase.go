@@ -28,16 +28,16 @@ func (eu *eventUsecase) DeleteSink(nl []adapter.Node) error {
 }
 
 func (eu *eventUsecase) CreateNode(n *adapter.Node, sn string) error {
-	mn, asl := adapter.NodeToModel(n, sn)
-
+	mn, all := adapter.NodeToModel(n, sn)
 	eu.rr.CreateNode(n.ID, &mn)
 
-	all := []adapter.Logic{}
-	for _, as := range asl {
-		ms, tempAll := adapter.SensorToModel(&as)
-		all = append(all, tempAll...)
-		eu.rr.CreateSensor(as.ID, &ms)
-	}
+	// all := []adapter.Logic{}
+	// for _, as := range asl {
+	// 	ms, tempAll := adapter.SensorToModel(&as)
+	// 	all = append(all, tempAll...)
+	// 	eu.rr.CreateSensor(as.ID, &ms)
+	// }
+
 	mll := adapter.LogicsToModels(all)
 	for _, ml := range mll {
 		eu.ls.CreateAndStartLogic(&ml)
@@ -50,12 +50,12 @@ func (eu *eventUsecase) DeleteNode(n *adapter.Node) error {
 	return eu.rr.DeleteNode(n.ID)
 }
 
-func (eu *eventUsecase) DeleteSensor(s *adapter.Sensor) error {
-	for _, l := range s.Logics {
-		eu.ls.RemoveLogic(l.SensorID, l.ID)
-	}
-	return eu.rr.DeleteSensor(s.ID)
-}
+// func (eu *eventUsecase) DeleteSensor(s *adapter.Sensor) error {
+// 	for _, l := range s.Logics {
+// 		eu.ls.RemoveLogic(l.SensorID, l.ID)
+// 	}
+// 	return eu.rr.DeleteSensor(s.ID)
+// }
 
 func (eu *eventUsecase) CreateLogic(l *adapter.Logic) error {
 	log.Println("in eu.CreateLogic")
@@ -68,5 +68,5 @@ func (eu *eventUsecase) CreateLogic(l *adapter.Logic) error {
 }
 
 func (eu *eventUsecase) DeleteLogic(l *adapter.Logic) error {
-	return eu.ls.RemoveLogic(l.SensorID, l.ID)
+	return eu.ls.RemoveLogic(l.NodeID, l.ID)
 }

@@ -14,10 +14,11 @@ import (
 )
 
 const (
-	from    = "toiotpdk@gmail.com"
+	from    = "airpost@gmail.com"
 	pass    = "REDACTED"
-	bodyFmt = "sensor(%s) on node(%s)"
-	msgFmt  = "Form: %s\nTo: %s\nSubject: ToIoT email\n\n%s"
+	// bodyFmt = "sensor(%s) on node(%s)"
+	bodyFmt = "node(%s)"
+	msgFmt  = "From: %s\nTo: %s\nSubject: AirPost email\n\n%s"
 )
 
 type EmailElement struct {
@@ -36,16 +37,16 @@ func (ee *EmailElement) Exec(d *model.LogicData) {
 	if ok {
 		ee.Interval[d.Node.Name] = false
 
-		body := fmt.Sprintf(bodyFmt, d.SensorName, d.Node.Name)
+		body := fmt.Sprintf(bodyFmt, d.Node.Name)
 		msg := fmt.Sprintf(msgFmt, from, ee.Email, body)
 
 		smtp.SendMail("smtp.gmail.com:587",
 			smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
 			from, []string{ee.Email}, []byte(msg))
 
-		tick := time.Tick(3 * time.Minute)
+		tick := time.NewTicker(3 * time.Minute)
 		go func() {
-			<-tick
+			<-tick.C
 			ee.Interval[d.Node.Name] = true
 		}()
 	}
@@ -91,7 +92,6 @@ func (ae *ActuatorElement) Exec(d *model.LogicData) {
 			pbytes, _ := json.Marshal(res)
 			buff := bytes.NewBuffer(pbytes)
 			addr := (*adapter.AddrMap)[d.Node.Sid]		
-			// log.Println("in Act.Exec, 받는 주소: " + "http://" + addr.Addr + "/actuator" + "전달내용: " + string(pbytes))
 			resp, err := http.Post("http://"+addr.Addr+"/actuator", "application/json", buff)
 			if err != nil {
 				panic(err)
@@ -99,9 +99,9 @@ func (ae *ActuatorElement) Exec(d *model.LogicData) {
 			defer resp.Body.Close()
 		}()
 		
-		tick := time.Tick(30 * time.Second)
+		tick := time.NewTicker(30 * time.Second)
 		go func() {
-			<-tick
+			<-tick.C
 			ae.Interval[d.Node.Name] = true
 		}()
 	}
