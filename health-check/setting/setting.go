@@ -18,32 +18,33 @@ func GetenvInt(target *int, init int, env string) {
 	}
 }
 
+/**************************************************************/
+/* Health setting                                             */
+/**************************************************************/
 type Health struct {
 	Server string
 	Listen string
 }
 
-// func (hs *Health) Getenv() {
-// 	hs.Server = os.Getenv("HEALTH_SERVER")
-// 	if hs.Server == "" {
-// 		hs.Server = "0.0.0.0:8083"
-// 	}
-// }
 func GetenvStr(target *string, init, env string) {
 	*target = os.Getenv(env)
 	if *target == "" {
 		*target = init
 	}
 }
+
 func (hs *Health) Getenv() {
-	// GetenvStr(&hs.Server, "1.237.226.48:8083", "HEALTH_SERVER") //localhost:8083", "HEALTH_SERVER")
-	// GetenvStr(&hs.Listen, "1.237.226.48:8085", "HEALTH_LISTEN") //localhost:8085", "HEALTH_LISTEN")
-	GetenvStr(&hs.Server, "10.5.110.27:8083", "HEALTH_SERVER")
-	GetenvStr(&hs.Listen, "10.5.110.27:8085", "HEALTH_LISTEN")
+	GetenvStr(&hs.Server, "221.140.150.7:8083", "HEALTH_SERVER")
+	GetenvStr(&hs.Listen, "221.140.150.7:8085", "HEALTH_LISTEN")
+	// GetenvStr(&hs.Server, "192.168.0.18:8083", "HEALTH_SERVER")
+	// GetenvStr(&hs.Listen, "192.168.0.18:8085", "HEALTH_LISTEN")
 }
 
 var Healthsetting = &Health{}
 
+/**************************************************************/
+/* App setting                                                */
+/**************************************************************/
 type App struct {
 	Server      string
 	RequestPath string
@@ -59,6 +60,9 @@ func (as *App) Getenv() {
 
 var Appsetting = &App{}
 
+/**************************************************************/
+/* Status setting                                             */
+/**************************************************************/
 type Status struct {
 	Count int
 	Tick  int

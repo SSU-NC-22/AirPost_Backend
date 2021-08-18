@@ -20,7 +20,9 @@ func GetenvInt(target *int, init int, env string) {
 	}
 }
 
-/* App setting */
+/**************************************************************/
+/* App setting                                                */
+/**************************************************************/
 type App struct {
 	Server string
 }
@@ -29,12 +31,15 @@ func (as *App) Getenv() {
 	as.Server = os.Getenv("APP_SERVER")
 	if as.Server == "" {
 		as.Server = "221.140.150.7:8081"
+		// as.Server = "192.168.0.18:8081"
 	}
 }
 
 var Appsetting = &App{}
 
-/* Database setting */
+/**************************************************************/
+/* Database setting                                           */
+/**************************************************************/
 type Database struct {
 	Driver   string `toml:"driver"`
 	Server   string `toml:"tcp"`
@@ -68,7 +73,9 @@ func (ds *Database) Getenv() {
 
 var Databasesetting = &Database{}
 
-/* Topic setting */
+/**************************************************************/
+/* Topic setting                                              */
+/**************************************************************/
 type Topic struct {
 	Name         string
 	Partitions   int
@@ -86,7 +93,9 @@ func (ts *Topic) Getenv() {
 
 var Topicsetting = &Topic{}
 
-/* Sink setting */
+/**************************************************************/
+/* Sink setting                                               */
+/**************************************************************/
 type DroneSink struct {
 	Name		string
 	Addr		string
