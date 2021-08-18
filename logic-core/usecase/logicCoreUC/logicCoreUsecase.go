@@ -30,13 +30,12 @@ func NewLogicCoreUsecase(rr repository.RegistRepo,
 	go func() {
 		for rawData := range in {
 			ld, err := lcu.ToLogicData(&rawData)
-			// log.Println("add metadata :", ld)
 
 			if err != nil {
 				continue
 			}
 
-			lchs, err := lcu.ls.GetLogicChans(ld.SensorID)
+			lchs, err := lcu.ls.GetLogicChans(ld.Node.Nid)
 			if err == nil {
 				for _, ch := range lchs {
 					if len(ch) != cap(ch) {

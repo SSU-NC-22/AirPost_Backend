@@ -28,10 +28,10 @@ func NewLogicService() *logicService {
 func (m *mux) CreateAndStartLogic(l *model.Logic) error {
 	listen := make(chan model.LogicData, 100)
 	
-	lchs, ok := m.chTable[l.SensorID]
+	lchs, ok := m.chTable[l.NodeID]
 	if !ok {
-		m.chTable[l.SensorID] = make(map[int]chan model.LogicData)
-		lchs, _ = m.chTable[l.SensorID]
+		m.chTable[l.NodeID] = make(map[int]chan model.LogicData)
+		lchs, _ = m.chTable[l.NodeID]
 	}
 	if _, ok := lchs[l.ID]; ok {
 		close(listen)
@@ -56,21 +56,21 @@ func (m *mux) CreateAndStartLogic(l *model.Logic) error {
 	return nil
 }
 
-func (m *mux) RemoveLogic(sid, lid int) error {
-	ch, ok := m.chTable[sid][lid]
+func (m *mux) RemoveLogic(nid, lid int) error {
+	ch, ok := m.chTable[nid][lid]
 	if !ok {
-		fmt.Errorf("GetLogicChans : cannot find listen channels")
+		return fmt.Errorf("GetLogicChans : cannot find listen channels")
 	}
 	close(ch)
-	delete(m.chTable[sid], lid)
-	if len(m.chTable[sid]) == 0 {
-		delete(m.chTable, sid)
+	delete(m.chTable[nid], lid)
+	if len(m.chTable[nid]) == 0 {
+		delete(m.chTable, nid)
 	}
 	return nil
 }
 
-func (m *mux) GetLogicChans(sid int) (map[int]chan model.LogicData, error) {
-	lchs, ok := m.chTable[sid]
+func (m *mux) GetLogicChans(nid int) (map[int]chan model.LogicData, error) {
+	lchs, ok := m.chTable[nid]
 	if !ok || len(lchs) == 0 {
 		return nil, fmt.Errorf("GetLogicChans : cannot find listen channels")
 	}

@@ -11,18 +11,18 @@ func (lcuc *logicCoreUsecase) ToLogicData(kd *model.KafkaData) (model.LogicData,
 	if err != nil {
 		return model.LogicData{}, err
 	}
-	s, err := lcuc.rr.FindSensor(kd.SensorID)
-	if err != nil {
-		return model.LogicData{}, err
-	}
+	// s, err := lcuc.rr.FindSensor(kd.SensorID)
+	// if err != nil {
+	// 	return model.LogicData{}, err
+	// }
 
 	vl := map[string]float64{}
-	for i, v := range s.SensorValues {
+	for i, v := range n.SensorValues {
 		vl[v] = kd.Values[i]
 	}
 	return model.LogicData{
-		SensorID:   kd.SensorID,
-		SensorName: s.Name,
+		// SensorID:   kd.SensorID,
+		// SensorName: s.Name,
 		Values:     vl,
 		Node:       *n,
 		Timestamp:  kd.Timestamp,
@@ -35,7 +35,7 @@ func (lcuc *logicCoreUsecase) ToDocument(ld *model.LogicData) model.Document {
 		sinkname=sinkname[1:]
 	}
 	return model.Document{		
-		Index: "smart박-" + (strings.Split(ld.SensorName,"-"))[1]+"-" + strings.ReplaceAll(sinkname," ", "-"),
+		Index: "airpost-" + (strings.Split(ld.Node.Name,"-"))[1]+"-" + strings.ReplaceAll(sinkname," ", "-"),
 		Doc:   *ld,
 	}
 }

@@ -75,7 +75,7 @@ func SetEventRoute(r *gin.Engine, h *handler.Handler) {
 		e.POST("/sink/delete", h.DeleteSink)
 		e.POST("/node/create", h.CreateNode)
 		e.POST("/node/delete", h.DeleteNode)
-		e.POST("/sensor/delete", h.DeleteSensor)
+		// e.POST("/sensor/delete", h.DeleteSensor)
 		e.POST("/logic/create", h.CreateLogic)
 		e.POST("/logic/delete", h.DeleteLogic)
 	}
