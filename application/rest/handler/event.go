@@ -29,10 +29,5 @@ func (h *Handler) RegistLogicService(c *gin.Context) {
 		return
 	}
 
-	// sl, err := h.ru.GetSinksByTopicID(l.TopicID)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	return
-	// }
 	c.JSON(http.StatusOK, l.Topic.Sinks)
 }

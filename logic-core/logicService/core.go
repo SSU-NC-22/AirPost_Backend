@@ -30,9 +30,11 @@ func (m *mux) CreateAndStartLogic(l *model.Logic) error {
 	
 	lchs, ok := m.chTable[l.NodeID]
 	if !ok {
+		log.Println("in CreateAndStartLogic, not ok lchs")
 		m.chTable[l.NodeID] = make(map[int]chan model.LogicData)
 		lchs, _ = m.chTable[l.NodeID]
 	}
+	log.Println("in CreateAndStartLogic, ok lchs")
 	if _, ok := lchs[l.ID]; ok {
 		close(listen)
 		return errors.New("already exist logic evnet")

@@ -45,12 +45,46 @@ type registRepo struct {
 }
 
 /**************************************************************/
-/* Node Regist Repo                                           */
+/* Node Repo                                                  */
 /**************************************************************/
 type nodeRepo struct {
 	nmu   *sync.RWMutex
 	ninfo map[int]model.Node
 }
+
+func (nr *nodeRepo) FindNode(key int) (*model.Node, error) {
+	nr.nmu.RLock()
+	defer nr.nmu.RUnlock()
+
+	n, ok := nr.ninfo[key]
+
+	if !ok {
+		return nil, errors.New("nodeRepo: cannot find node")
+	}
+	return &n, nil
+}
+
+func (nr *nodeRepo) CreateNode(key int, n *model.Node) error {
+	_, ok := nr.ninfo[key]
+	if ok {
+		return errors.New("nodeRepo: already exist node")
+	}
+	nr.ninfo[key] = *n
+	return nil
+}
+
+func (nr *nodeRepo) DeleteNode(key int) error {
+	_, ok := nr.ninfo[key]
+	if !ok {
+		return errors.New("nodeRepo: cannot find node")
+	}
+	delete(nr.ninfo, key)
+	return nil
+}
+
+/**************************************************************/
+/* NodeInfo Repo                                              */
+/**************************************************************/
 type nodeInfoRepo struct {
 	nmu   *sync.RWMutex
 	ninfo map[int]model.Nodeinfo
@@ -87,43 +121,30 @@ func (nir *nodeInfoRepo) GetSid(nid int) (*model.Nodeinfo, error) {
 }
 
 /**************************************************************/
-/* Sink Regist Repo                                           */
+/* SinkAddr Repo                                              */
 /**************************************************************/
 type sinkAddrRepo struct {
 	samu  *sync.RWMutex
 	addrs map[int]model.Sink
 }
 
-func (nr *nodeRepo) FindNode(key int) (*model.Node, error) {
-	nr.nmu.RLock()
-	defer nr.nmu.RUnlock()
-
-	n, ok := nr.ninfo[key]
-
-	if !ok {
-		return nil, errors.New("nodeRepo: cannot find node")
-	}
-	return &n, nil
-}
-
-func (nr *nodeRepo) CreateNode(key int, n *model.Node) error {
-	_, ok := nr.ninfo[key]
+func (sar *sinkAddrRepo) AppendSinkAddr(sid int, s *string) error {
+	sar.samu.RLock()
+	defer sar.samu.RUnlock()
+	_, ok := sar.addrs[sid]
 	if ok {
-		return errors.New("nodeRepo: already exist node")
+		return errors.New("sinkAddrRepo: already exist sink")
 	}
-	nr.ninfo[key] = *n
+	var sink model.Sink
+	sink.Addr = *s
+	sar.addrs[sid] = sink
+	log.Println("test >>>>>> in memory/appendSinkAddr, sinkID : ", sid, "sinkADDR : ", *s)
 	return nil
 }
 
-func (nr *nodeRepo) DeleteNode(key int) error {
-	_, ok := nr.ninfo[key]
-	if !ok {
-		return errors.New("nodeRepo: cannot find node")
-	}
-	delete(nr.ninfo, key)
-	return nil
-}
-
+/**************************************************************/
+/* Sensor Repo                                                */
+/**************************************************************/
 // type sensorRepo struct {
 // 	smu   *sync.RWMutex
 // 	sinfo map[int]model.Sensor
@@ -157,17 +178,3 @@ func (nr *nodeRepo) DeleteNode(key int) error {
 // 	delete(sr.sinfo, key)
 // 	return nil
 // }
-
-func (sar *sinkAddrRepo) AppendSinkAddr(sid int, s *string) error {
-	sar.samu.RLock()
-	defer sar.samu.RUnlock()
-	_, ok := sar.addrs[sid]
-	if ok {
-		return errors.New("sinkAddrRepo: already exist sink")
-	}
-	var sink model.Sink
-	sink.Addr = *s
-	sar.addrs[sid] = sink
-	log.Println("test >>>>>> in memory/appendSinkAddr, sinkID : ", sid, "sinkADDR : ", *s)
-	return nil
-}
