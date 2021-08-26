@@ -18,6 +18,7 @@ type mux struct {
 }
 
 func NewLogicService() *logicService {
+	log.Println("----- core NewLogicService start -----")
 	return &logicService{
 		mux{
 			chTable: make(map[int]map[int]chan model.LogicData),
@@ -26,6 +27,7 @@ func NewLogicService() *logicService {
 }
 
 func (m *mux) CreateAndStartLogic(l *model.Logic) error {
+	log.Println("----- core CreateAndStartLogic start -----")
 	listen := make(chan model.LogicData, 100)
 	
 	lchs, ok := m.chTable[l.NodeID]
@@ -59,6 +61,7 @@ func (m *mux) CreateAndStartLogic(l *model.Logic) error {
 }
 
 func (m *mux) RemoveLogic(nid, lid int) error {
+	log.Println("----- core RemoveLogic start -----")
 	ch, ok := m.chTable[nid][lid]
 	if !ok {
 		return fmt.Errorf("GetLogicChans : cannot find listen channels")
@@ -72,6 +75,7 @@ func (m *mux) RemoveLogic(nid, lid int) error {
 }
 
 func (m *mux) GetLogicChans(nid int) (map[int]chan model.LogicData, error) {
+	log.Println("----- core GetLogicChans start -----")
 	lchs, ok := m.chTable[nid]
 	if !ok || len(lchs) == 0 {
 		return nil, fmt.Errorf("GetLogicChans : cannot find listen channels")
