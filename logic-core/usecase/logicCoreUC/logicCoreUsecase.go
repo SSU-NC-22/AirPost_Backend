@@ -1,6 +1,8 @@
 package logicCoreUC
 
 import (
+	"log"
+
 	"github.com/eunnseo/AirPost/logic-core/adapter"
 	"github.com/eunnseo/AirPost/logic-core/domain/repository"
 	"github.com/eunnseo/AirPost/logic-core/domain/service"
@@ -28,22 +30,30 @@ func NewLogicCoreUsecase(rr repository.RegistRepo,
 	out := lcu.es.GetInput()
 
 	go func() {
+		log.Println("in NewLogicCoreUsecase, run go routin")
 		for rawData := range in {
-			ld, err := lcu.ToLogicData(&rawData)
+			log.Println("2")
 
+			ld, err := lcu.ToLogicData(&rawData)
 			if err != nil {
+				log.Println("Error in NewLogicCoreUsecase in ToLogicData")
 				continue
 			}
+			log.Println("in NewLogicCoreUsecase, ld = ", ld)
 
-			lchs, err := lcu.ls.GetLogicChans(ld.Node.Nid)
+			lchs, err := lcu.ls.GetLogicChans(ld.NodeID)
 			if err == nil {
+				log.Println("in NewLogicCoreUsecase, lchs = ", lchs)
 				for _, ch := range lchs {
+					log.Println("?????")
 					if len(ch) != cap(ch) {
-						ch <- ld
+						log.Println("?????-----?????")
+						ch <- ld // go to "listen" in CreateAndStartLogic core.go
 					}
 				}
 			}
-			out <- lcu.ToDocument(&ld)
+			log.Println("in NewLogicCoreUsecase, after lchs <- ?????")
+			out <- lcu.ToDocument(&ld) // go to 
 		}
 	}()
 

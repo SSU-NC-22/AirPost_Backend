@@ -28,8 +28,9 @@ func (eu *eventUsecase) DeleteSink(nl []adapter.Node) error {
 }
 
 func (eu *eventUsecase) CreateNode(n *adapter.Node, sn string) error {
+	// node
 	mn, all := adapter.NodeToModel(n, sn)
-	eu.rr.CreateNode(n.ID, &mn)
+	eu.rr.CreateNode(n.ID, &mn) // regist in nodeRepo
 
 	// all := []adapter.Logic{}
 	// for _, as := range asl {
@@ -38,6 +39,7 @@ func (eu *eventUsecase) CreateNode(n *adapter.Node, sn string) error {
 	// 	eu.rr.CreateSensor(as.ID, &ms)
 	// }
 
+	// logic
 	mll := adapter.LogicsToModels(all)
 	for _, ml := range mll {
 		eu.ls.CreateAndStartLogic(&ml)

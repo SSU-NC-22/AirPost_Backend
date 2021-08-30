@@ -16,7 +16,6 @@ import (
 const (
 	from    = "airpost@gmail.com"
 	pass    = "REDACTED"
-	// bodyFmt = "sensor(%s) on node(%s)"
 	bodyFmt = "node(%s)"
 	msgFmt  = "From: %s\nTo: %s\nSubject: AirPost email\n\n%s"
 )
@@ -28,30 +27,38 @@ type EmailElement struct {
 }
 
 func (ee *EmailElement) Exec(d *model.LogicData) {
-	log.Println("!!!!in EmailElement.Exec !!!!")
+	log.Println("\t\t!!!!in EmailElement.Exec !!!!")
 	ok, exist := ee.Interval[d.Node.Name]
 
 	if !exist {
 		ee.Interval[d.Node.Name] = true
 	}
 	if ok {
+		log.Println("\t\tin EmailElement.Exec, ok")
 		ee.Interval[d.Node.Name] = false
 
 		body := fmt.Sprintf(bodyFmt, d.Node.Name)
 		msg := fmt.Sprintf(msgFmt, from, ee.Email, body)
 
-		smtp.SendMail("smtp.gmail.com:587",
+		err := smtp.SendMail("smtp.gmail.com:587",
 			smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
 			from, []string{ee.Email}, []byte(msg))
+		if err != nil {
+			fmt.Printf("smtp error: %s\n", err)
+		} else {
+			fmt.Println("Mail sent successfully")
+		}
 
-		tick := time.NewTicker(3 * time.Minute)
+		tick := time.NewTicker(10 * time.Second)
 		go func() {
 			<-tick.C
 			ee.Interval[d.Node.Name] = true
 		}()
 	}
+	log.Println("\t\tin EmailElement.Exec, before BaseElement.Exec(d)")
 	ee.BaseElement.Exec(d)
 }
+
 
 type ActuatorElement struct {
 	BaseElement
@@ -72,16 +79,17 @@ type Actuator struct {
 	} `json:"values"`
 }
 
-
-
 func (ae *ActuatorElement) Exec(d *model.LogicData) {
+	log.Println("\t\t!!!!in ActuatorElement.Exec !!!!")
 	ok, exist := ae.Interval[d.Node.Name]
 	if !exist {
 		ae.Interval[d.Node.Name] = true
 	}
 	if ok {
+		log.Println("\t\tin ActuatorElement.Exec, ok")
 		ae.Interval[d.Node.Name] = false
 		go func() {
+			log.Println("\t\tin ActuatorElement.Exec, go routine 1")
 			
 			res := Actuator{
 				Nid:    d.Node.Nid,
@@ -103,8 +111,10 @@ func (ae *ActuatorElement) Exec(d *model.LogicData) {
 		go func() {
 			<-tick.C
 			ae.Interval[d.Node.Name] = true
+			log.Println("\t\tin ActuatorElement.Exec, go routine 2")
 		}()
 	}
+	log.Println("\t\tin ActuatorElement.Exec, before BaseElement.Exec(d)")
 	ae.BaseElement.Exec(d)
 }
 

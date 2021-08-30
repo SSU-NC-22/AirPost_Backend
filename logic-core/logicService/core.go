@@ -18,7 +18,6 @@ type mux struct {
 }
 
 func NewLogicService() *logicService {
-	log.Println("----- core NewLogicService start -----")
 	return &logicService{
 		mux{
 			chTable: make(map[int]map[int]chan model.LogicData),
@@ -39,7 +38,7 @@ func (m *mux) CreateAndStartLogic(l *model.Logic) error {
 	log.Println("in CreateAndStartLogic, ok lchs")
 	if _, ok := lchs[l.ID]; ok {
 		close(listen)
-		return errors.New("already exist logic evnet")
+		return errors.New("already exist logic event")
 	}
 	lchs[l.ID] = listen
 

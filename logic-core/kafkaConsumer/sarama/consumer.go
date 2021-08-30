@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"fmt"
 
 	"github.com/eunnseo/AirPost/logic-core/adapter"
 	"github.com/eunnseo/AirPost/logic-core/domain/model"
@@ -45,6 +44,7 @@ func NewKafkaConsumer() *group {
 		ready: make(chan bool),
 	}
 	go func() {
+		log.Println("in NewKafkaConsumer, run go routin")
 		for {
 			err = kafkaConsumer.client.Consume(ctx, setting.Kafkasetting.Topics, &consumer)
 			if err != nil {
@@ -61,6 +61,7 @@ func NewKafkaConsumer() *group {
 }
 
 func (g *group) GetOutput() <-chan model.KafkaData {
+	log.Println("----- consumer GetOutput func start -----")
 	if g != nil {
 		return g.out
 	}
@@ -82,21 +83,23 @@ func (consumer *consumer) Cleanup(sarama.ConsumerGroupSession) error {
 }
 
 func (consumer *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	fmt.Println("\n----- ConsumeClaim func start -----")
+	log.Println("----- consumer ConsumeClaim func start -----")
 	for message := range claim.Messages() {
 		
 		log.Println("kafka consumer :", string(message.Value))
-		fmt.Println("kafka consumer :", string(message.Value))
 		ad := adapter.KafkaData{}
 		if err := json.Unmarshal(message.Value, &ad); err != nil {
 			continue
 		}
+
 		d, err := adapter.KafkaToModel(&ad)
 		if err != nil {
 			continue
 		}
 		
-		consumer.out <- d
+		log.Println("in ConsumeClaim, d = ", d)
+		log.Println("1")
+		consumer.out <- d // go to "in" in NewLogicCoreUsecase logicCoreUsecase.go
 	}
 
 	return nil

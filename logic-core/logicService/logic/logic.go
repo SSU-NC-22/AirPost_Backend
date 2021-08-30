@@ -18,20 +18,23 @@ type BaseElement struct {
 }
 
 func (e *BaseElement) SetNext(next Elementer) {
+	log.Println("----- logic BaseElement.SetNext start -----")
 	e.next = next
 }
 
 func (e *BaseElement) Exec(d *model.LogicData) {
 
+	log.Println("\t----- logic BaseElement.Exec start -----")
 	if e.next != nil {
-		log.Println("!!!!in BaseElement.Exec !!!!")
+		log.Println("\t!!!!in BaseElement.Exec !!!!")
 		e.next.Exec(d)
 	} else {
-		log.Println("!!!!NOT!.!!!in BaseElement.Exec !!!!")
+		log.Println("\t!!!!NOT!.!!!in BaseElement.Exec !!!!")
 	}
 }
 
 func BuildLogic(l *model.Logic) (Elementer, error) {
+	log.Println("----- logic BuildLogic start -----")
 	if len(l.Elems) == 0 {
 		return nil, fmt.Errorf("invalid Element's length: %v", *l)
 	}
@@ -42,7 +45,7 @@ func BuildLogic(l *model.Logic) (Elementer, error) {
 	}
 	res := &BaseElement{}
 	res.SetNext(first)
-	for _, raw := range l.Elems[1:] { // Elem 링크드 리스트 생성 후 리턴
+	for _, raw := range l.Elems[1:] { // Elem 링크드 리스트 생성 후 리턴? 안들어감
 		log.Println("!!!!in BuildLogic, now Elem:", raw)
 		if elem, err := UnmarshalElement(&raw); err != nil {
 			log.Println("!!!!in BuildLogic, err UnmarshalElement")
@@ -58,6 +61,7 @@ func BuildLogic(l *model.Logic) (Elementer, error) {
 }
 
 func UnmarshalElement(e *model.Element) (Elementer, error) {
+	log.Println("----- logic UnmarshalElement start -----")
 	elem := GetElementer(e.Elem)
 	log.Println("in UnmarshalElement, e(Element) = ", e)
 	log.Println("in UnmarshalElement, elem1212= ", e.Elem)

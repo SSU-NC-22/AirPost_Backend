@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"time"
+	"log"
 
 	"github.com/eunnseo/AirPost/logic-core/domain/model"
 )
@@ -26,8 +27,10 @@ type KafkaData struct {
 func KafkaToModel(d *KafkaData) (model.KafkaData, error) {
 	t, err := time.ParseInLocation(timeFmt, d.Timestamp, loc)
 	if err != nil {
+		log.Println("Error from ParseInLocation")
 		return model.KafkaData{}, err
 	}
+	log.Println("Success KafkaToModel")
 	return model.KafkaData{
 		// SensorID:  d.SensorID,
 		NodeID:    d.NodeID,
