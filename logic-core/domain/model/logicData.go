@@ -7,7 +7,7 @@ import (
 type LogicData struct {
 	// SensorID   int                `json:"sensor_id"`
 	// SensorName string             `json:"sensor_name"`
-	Values     map[string]float64 `json:"values"`
+	Values     map[string]float64 `json:"values"` // sensor values
 	NodeID     int                `json:"node_id"`
 	Node       Node               `json:"node"`
 	Timestamp  time.Time          `json:"timestamp"`

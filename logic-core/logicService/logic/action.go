@@ -71,9 +71,9 @@ type ActuatorElement struct {
 }
 
 type Actuator struct {
-	Nid    int `json:"nid"`
-	Aid    int `json:"aid"`
-	Values []struct {
+	Nid    int `json:"nid"`	// node id
+	Aid    int `json:"aid"` // actuator id
+	Values []struct {		// action values
 		Value int `json:"value"`
 		Sleep int `json:"sleep"`
 	} `json:"values"`
@@ -96,10 +96,12 @@ func (ae *ActuatorElement) Exec(d *model.LogicData) {
 				Aid:    ae.Aid,
 				Values: ae.Values,
 			}
+			log.Println("\t\tin ActuatorElement.Exec, res = ", res)
 					
 			pbytes, _ := json.Marshal(res)
 			buff := bytes.NewBuffer(pbytes)
-			addr := (*adapter.AddrMap)[d.Node.Sid]		
+			addr := (*adapter.AddrMap)[d.Node.Sid] // sink address
+			log.Println("\t\tin ActuatorElement.Exec, addr = ", addr)
 			resp, err := http.Post("http://"+addr.Addr+"/actuator", "application/json", buff)
 			if err != nil {
 				panic(err)

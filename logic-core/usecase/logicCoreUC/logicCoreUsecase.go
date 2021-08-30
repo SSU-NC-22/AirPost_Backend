@@ -52,8 +52,7 @@ func NewLogicCoreUsecase(rr repository.RegistRepo,
 					}
 				}
 			}
-			log.Println("in NewLogicCoreUsecase, after lchs <- ?????")
-			out <- lcu.ToDocument(&ld) // go to 
+			out <- lcu.ToDocument(&ld) // go to elastic client
 		}
 	}()
 

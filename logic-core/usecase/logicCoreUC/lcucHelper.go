@@ -8,7 +8,6 @@ import (
 )
 
 func (lcuc *logicCoreUsecase) ToLogicData(kd *model.KafkaData) (model.LogicData, error) {
-	log.Println("----- lcucHelper ToLogicData func start -----")
 	n, err := lcuc.rr.FindNode(kd.NodeID)
 	if err != nil {
 		log.Println("Error in ToLogicData from lcuc.rr.FindNode(kd.NodeID)")
