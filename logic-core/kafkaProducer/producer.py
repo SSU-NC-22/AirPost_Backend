@@ -5,12 +5,12 @@ import time
 producer = KafkaProducer(acks=0, compression_type='gzip', bootstrap_servers=['localhost:9092'], value_serializer=lambda x: dumps(x).encode('utf-8'))
 
 start = time.time()
-for i in range(5):
+for i in range(2):
     data = {
         # "sensor_id" : "sensor-" + str(i),
-        "node_id" : "node-" + str(i),
-        "values" : [1, 2, 3],
-        "timestamp" : "2021-08-16"
+        "node_id" : 1,
+        "values" : [1, 2, 3, 4, 5],
+        "timestamp" : "2021-08-26 16:57:05"
     }
     print(data)
     producer.send('sensor-data', value=data) # topic name: sensor-data, value: data
