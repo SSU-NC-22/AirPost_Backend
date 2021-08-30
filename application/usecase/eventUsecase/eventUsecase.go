@@ -22,11 +22,11 @@ func NewEventUsecase(sir repository.SinkRepo, lsr repository.LogicServiceRepo) *
 		sir:          sir,
 		lsr:          lsr,
 	}
-	tick := time.Tick(10 * time.Second)
+	tick := time.NewTicker(10 * time.Second)
 	go func() {
 		for {
 			select {
-			case <-tick:
+			case <-tick.C:
 				eu.CheckAndUnregistLogicServices()
 			}
 		}
@@ -37,12 +37,6 @@ func NewEventUsecase(sir repository.SinkRepo, lsr repository.LogicServiceRepo) *
 /**************************************************************/
 /* logic service event usecase                                */
 /**************************************************************/
-// `{
-// 	"addr" : "localhost:8082",
-// 	"topic" : {
-// 		"name":"sensors"
-// 	}
-// }`
 func (eu *eventUsecase) RegistLogicService(l *model.LogicService) error {
 	if temp, err := eu.lsr.FindByAddr(l.Addr); temp.ID != 0 || err != nil {
 		sinks, err := eu.sir.FindsByTopicIDWithNodesSensorsValuesLogics(temp.TopicID)
