@@ -2,13 +2,16 @@ package logicCoreUC
 
 import (
 	"strings"
+	"log"
 
 	"github.com/eunnseo/AirPost/logic-core/domain/model"
 )
 
 func (lcuc *logicCoreUsecase) ToLogicData(kd *model.KafkaData) (model.LogicData, error) {
+	log.Println("----- lcucHelper ToLogicData func start -----")
 	n, err := lcuc.rr.FindNode(kd.NodeID)
 	if err != nil {
+		log.Println("Error in ToLogicData from lcuc.rr.FindNode(kd.NodeID)")
 		return model.LogicData{}, err
 	}
 	// s, err := lcuc.rr.FindSensor(kd.SensorID)
@@ -24,6 +27,7 @@ func (lcuc *logicCoreUsecase) ToLogicData(kd *model.KafkaData) (model.LogicData,
 		// SensorID:   kd.SensorID,
 		// SensorName: s.Name,
 		Values:     vl,
+		NodeID:		kd.NodeID,
 		Node:       *n,
 		Timestamp:  kd.Timestamp,
 	}, nil
