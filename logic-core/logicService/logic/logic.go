@@ -18,13 +18,13 @@ type BaseElement struct {
 }
 
 func (e *BaseElement) SetNext(next Elementer) {
-	log.Println("----- logic BaseElement.SetNext start -----")
+	log.Println("===== logic BaseElement.SetNext start =====")
 	e.next = next
 }
 
 func (e *BaseElement) Exec(d *model.LogicData) {
 
-	log.Println("\t----- logic BaseElement.Exec start -----")
+	log.Println("\t===== logic BaseElement.Exec start =====")
 	if e.next != nil {
 		log.Println("\t!!!!in BaseElement.Exec !!!!")
 		e.next.Exec(d)
@@ -34,7 +34,7 @@ func (e *BaseElement) Exec(d *model.LogicData) {
 }
 
 func BuildLogic(l *model.Logic) (Elementer, error) {
-	log.Println("----- logic BuildLogic start -----")
+	log.Println("===== logic BuildLogic start =====")
 	if len(l.Elems) == 0 {
 		return nil, fmt.Errorf("invalid Element's length: %v", *l)
 	}
@@ -61,7 +61,7 @@ func BuildLogic(l *model.Logic) (Elementer, error) {
 }
 
 func UnmarshalElement(e *model.Element) (Elementer, error) {
-	log.Println("----- logic UnmarshalElement start -----")
+	log.Println("===== logic UnmarshalElement start =====")
 	elem := GetElementer(e.Elem)
 	log.Println("in UnmarshalElement, e(Element) = ", e)
 	log.Println("in UnmarshalElement, elem1212= ", e.Elem)

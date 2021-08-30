@@ -61,7 +61,7 @@ func NewKafkaConsumer() *group {
 }
 
 func (g *group) GetOutput() <-chan model.KafkaData {
-	log.Println("----- consumer GetOutput func start -----")
+	log.Println("===== consumer GetOutput func start =====")
 	if g != nil {
 		return g.out
 	}
@@ -83,7 +83,7 @@ func (consumer *consumer) Cleanup(sarama.ConsumerGroupSession) error {
 }
 
 func (consumer *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	log.Println("----- consumer ConsumeClaim func start -----")
+	log.Println("===== consumer ConsumeClaim func start =====")
 	for message := range claim.Messages() {
 		
 		log.Println("kafka consumer :", string(message.Value))
