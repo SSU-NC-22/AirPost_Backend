@@ -58,4 +58,6 @@ type EventUsecase interface {
 	DeleteLogicEvent(l *model.Logic) error
 
 	PostToSink(sid int) error
+
+	CreateDeliveryEvent(d *model.Delivery) error
 }

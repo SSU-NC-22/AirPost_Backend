@@ -1,7 +1,6 @@
 package eventUsecase
 
 import (
-	"fmt"
 	"log"
 	"sync"
 
@@ -10,7 +9,7 @@ import (
 )
 
 func waitRespGroup(e EVENT, body interface{}, ll []model.LogicService) (prl []pingRequest) {
-	fmt.Println("\n\t---------- Event waitRespGroup start ----------")
+	log.Println("\t===== event waitRespGroup start =====")
 	var wg sync.WaitGroup // 고루틴이 종료될 때까지 대기
 	for _, l := range ll {
 		wg.Add(1) // WaitGroup에 대기 중인 고루틴 개수 추가
@@ -88,7 +87,7 @@ func (eu *eventUsecase) DeleteNodeEvent(n *model.Node) error {
 }
 
 /**************************************************************/
-/* logic event usecase                                         */
+/* logic event usecase                                        */
 /**************************************************************/
 func (eu *eventUsecase) CreateLogicEvent(l *model.Logic) error {
 	e := CreateLogic
@@ -110,6 +109,22 @@ func (eu *eventUsecase) DeleteLogicEvent(l *model.Logic) error {
 		return err
 	}
 	eu.requestRetry = append(eu.requestRetry, waitRespGroup(e, *l, ll)...)
+
+	return nil
+}
+
+/**************************************************************/
+/* delivery event usecase                                     */
+/**************************************************************/
+func (eu *eventUsecase) CreateDeliveryEvent(d *model.Delivery) error {
+	log.Println("\t===== event CreateDeliveryEvent start =====")
+	e := CreateDelivery
+
+	ll, err := eu.lsr.FindsByTopicID(d.Drone.Sink.Topic.ID)
+	if err != nil {
+		return err
+	}
+	eu.requestRetry = append(eu.requestRetry, waitRespGroup(e, *d, ll)...)
 
 	return nil
 }

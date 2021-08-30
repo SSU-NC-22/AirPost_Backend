@@ -27,7 +27,6 @@ import (
 // @Success 201 {object} adapter.SinkPage "if page query is exist, return pagenation result. pages only valid when page is 1."
 // @Router /regist/sink [get]
 func (h *Handler) ListSinks(c *gin.Context) {
-	fmt.Println("\n----- handler ListSinks func start -----")
 	var (
 		err   error
 		sinks []model.Sink
@@ -531,7 +530,7 @@ func (h *Handler) UnregistTopic(c *gin.Context) {
 // @Success 200 {object} model.Delivery
 // @Router /regist/delivery [post]
 func (h *Handler) RegistDelivery(c *gin.Context) {
-	fmt.Println("\n----- handler RegistDelivery func start -----")
+	log.Println("===== handler RegistDelivery func start =====")
 	var delivery model.Delivery
 	delivery.CreatedAt = time.Now()
 
@@ -540,11 +539,11 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		return
 	}
 
-	// create order_num (date + src node id + dest node id + random)
+	// create order_num (date + src station id + dest station id + random)
 	t := delivery.CreatedAt.String()
 	date := t[2:4] + t[5:7] + t[8:10]
-	srcid := fmt.Sprintf("%03d", delivery.SrcNodeID)
-	destid := fmt.Sprintf("%03d", delivery.DestNodeID)
+	srcid := fmt.Sprintf("%03d", delivery.SrcStationID)
+	destid := fmt.Sprintf("%03d", delivery.DestStationID)
 	timeSource := rand.NewSource(time.Now().UnixNano())
 	random := fmt.Sprintf("%03d", rand.New(timeSource).Intn(999))
 	delivery.OrderNum = date + srcid + destid + random
@@ -555,6 +554,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		return
 	}
 
+	h.eu.CreateDeliveryEvent(&delivery)
 	c.JSON(http.StatusOK, delivery)
-	fmt.Println("\n----- handler RegistDelivery func fin -----")
+	log.Println("===== handler RegistDelivery func fin =====")
 }

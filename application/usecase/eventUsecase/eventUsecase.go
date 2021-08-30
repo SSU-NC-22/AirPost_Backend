@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"log"
 
 	"github.com/eunnseo/AirPost/application/domain/model"
 	"github.com/eunnseo/AirPost/application/domain/repository"
@@ -78,6 +79,9 @@ const (
 
 	CreateLogic
 	DeleteLogic
+
+	CreateDelivery
+	DeleteDelivery
 )
 
 // url을 만들기 위한 event path
@@ -89,6 +93,8 @@ var EventPath = [...]string{
 	"/event/sensor/delete",
 	"/event/logic/create",
 	"/event/logic/delete",
+	"/event/delivery/create",
+	"/event/delivery/delete",
 }
 
 type pingRequest struct {
@@ -112,7 +118,7 @@ func (pr *pingRequest) ping() error {
 /* sink event usecase                                         */
 /**************************************************************/
 func (eu *eventUsecase) PostToSink(sid int) error {
-	fmt.Println("\n\t---------- Event PostToSink start ----------")
+	log.Println("\t===== eventUsecase PostToSink start =====")
 	if sink, err := eu.sir.FindByIDWithNodesSensorsValuesTopic(sid); err != nil {
 		return err
 	} else {
