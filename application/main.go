@@ -10,6 +10,7 @@ import (
 	"github.com/eunnseo/AirPost/application/domain/repository"
 	"github.com/eunnseo/AirPost/application/rest/handler"
 	"github.com/eunnseo/AirPost/application/setting"
+	"github.com/eunnseo/AirPost/application/usecase"
 	"github.com/eunnseo/AirPost/application/usecase/eventUsecase"
 	"github.com/eunnseo/AirPost/application/usecase/registUsecase"
 	"github.com/gin-contrib/cors"
@@ -51,9 +52,9 @@ func main() {
 	setEventRoute(r, h)
 	initTopic(tpr)
 
-	initDroneSink(sir)
-	initStationSink(sir)
-	initTagSink(sir)
+	initDroneSink(sir, eu)
+	initStationSink(sir, eu)
+	initTagSink(sir, eu)
 
 	log.Fatal(r.Run(setting.Appsetting.Server))
 }
@@ -123,7 +124,7 @@ func initTopic(tpr repository.TopicRepo) {
 	}
 }
 
-func initDroneSink(sir repository.SinkRepo) {
+func initDroneSink(sir repository.SinkRepo, eu usecase.EventUsecase) {
 	if setting.DroneSinksetting.Name != "" {
 		s := model.Sink{
 			Name:		setting.DroneSinksetting.Name,
@@ -131,10 +132,11 @@ func initDroneSink(sir repository.SinkRepo) {
 			TopicID:	setting.DroneSinksetting.TopicID,
 		}
 		sir.Create(&s)
+		eu.CreateSinkEvent(&s)
 	}
 }
 
-func initStationSink(sir repository.SinkRepo) {
+func initStationSink(sir repository.SinkRepo, eu usecase.EventUsecase) {
 	if setting.StationSinksetting.Name != "" {
 		s := model.Sink{
 			Name:		setting.StationSinksetting.Name,
@@ -142,10 +144,11 @@ func initStationSink(sir repository.SinkRepo) {
 			TopicID:	setting.StationSinksetting.TopicID,
 		}
 		sir.Create(&s)
+		eu.CreateSinkEvent(&s)
 	}
 }
 
-func initTagSink(sir repository.SinkRepo) {
+func initTagSink(sir repository.SinkRepo, eu usecase.EventUsecase) {
 	if setting.TagSinksetting.Name != "" {
 		s := model.Sink{
 			Name:		setting.TagSinksetting.Name,
@@ -153,7 +156,7 @@ func initTagSink(sir repository.SinkRepo) {
 			TopicID:	setting.TagSinksetting.TopicID,
 		}
 		sir.Create(&s)
+		eu.CreateSinkEvent(&s)
 	}
 }
 
-// Need to start Sink Event Function
