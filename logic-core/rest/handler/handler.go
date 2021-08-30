@@ -92,22 +92,6 @@ func (h *Handler) DeleteNode(c *gin.Context) {
 }
 
 /**************************************************************/
-/* Snesor handler                                               */
-/**************************************************************/
-// func (h *Handler) DeleteSensor(c *gin.Context) {
-// 	var as adapter.Sensor
-// 	if err := c.ShouldBindJSON(&as); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-// 	if err := h.evuc.DeleteSensor(&as); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-// 	c.JSON(http.StatusOK, as)
-// }
-
-/**************************************************************/
 /* Logic handler                                              */
 /**************************************************************/
 func (h *Handler) CreateLogic(c *gin.Context) {
@@ -136,4 +120,22 @@ func (h *Handler) DeleteLogic(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, al)
+}
+
+/**************************************************************/
+/* Delivery handler                                           */
+/**************************************************************/
+func (h *Handler) CreateDelivery(c *gin.Context) {
+	var ad adapter.Delivery
+
+	if err := c.ShouldBindJSON(&ad); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	log.Println("in CreateDelivery, ad = ", ad)
+	if err := h.evuc.CreateDelivery(&ad); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, ad)
 }

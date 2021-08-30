@@ -79,6 +79,7 @@ func SetEventRoute(r *gin.Engine, h *handler.Handler) {
 		// e.POST("/sensor/delete", h.DeleteSensor)
 		e.POST("/logic/create", h.CreateLogic)
 		e.POST("/logic/delete", h.DeleteLogic)
+		e.POST("/delivery/create", h.CreateDelivery)
 	}
 }
 

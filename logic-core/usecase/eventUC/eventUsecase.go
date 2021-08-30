@@ -52,13 +52,6 @@ func (eu *eventUsecase) DeleteNode(n *adapter.Node) error {
 	return eu.rr.DeleteNode(n.ID)
 }
 
-// func (eu *eventUsecase) DeleteSensor(s *adapter.Sensor) error {
-// 	for _, l := range s.Logics {
-// 		eu.ls.RemoveLogic(l.SensorID, l.ID)
-// 	}
-// 	return eu.rr.DeleteSensor(s.ID)
-// }
-
 func (eu *eventUsecase) CreateLogic(l *adapter.Logic) error {
 	log.Println("in eu.CreateLogic")
 	if ml, err := adapter.LogicToModel(l); err != nil {
@@ -71,4 +64,10 @@ func (eu *eventUsecase) CreateLogic(l *adapter.Logic) error {
 
 func (eu *eventUsecase) DeleteLogic(l *adapter.Logic) error {
 	return eu.ls.RemoveLogic(l.NodeID, l.ID)
+}
+
+func (eu *eventUsecase) CreateDelivery(d *adapter.Delivery) error {
+	log.Println("in eu.CreateDelivery")
+	
+	return nil
 }

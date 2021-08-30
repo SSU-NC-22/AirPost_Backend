@@ -69,29 +69,11 @@ func LogicsToModels(ll []Logic) []model.Logic {
 	return res
 }
 
-// type Sensor struct {
-// 	ID           int           `json:"id"`
-// 	Name         string        `json:"name"`
-// 	SensorValues []SensorValue `json:"sensor_values"`
-// 	Logics       []Logic       `json:"logics"`
-// }
-
 type SensorValue struct {
 	NodeID		int    `json:"node_id"`		// original name was SensorID
 	ValueName	string `json:"value_name"`
 	Index		int    `json:"index"`
 }
-
-// func SensorToModel(s *Sensor) (model.Sensor, []Logic) {
-// 	sv := make([]string, len(s.SensorValues))
-// 	for i, v := range s.SensorValues {
-// 		sv[i] = v.ValueName
-// 	}
-// 	return model.Sensor{
-// 		Name:         s.Name,
-// 		SensorValues: sv,
-// 	}, s.Logics
-// }
 
 type Node struct {
 	ID				int				`json:"id"`
@@ -138,4 +120,21 @@ type Topic struct {
 type LogicService struct {
 	Addr  string `json:"addr"`
 	Topic Topic  `json:"topic"`
+}
+
+type Delivery struct {
+	ID			  int		`json:"id"`
+	OrderNum	  string	`json:"order_num"`
+	DroneID		  int		`json:"drone_id"`
+	Drone		  Node		`json:"drone_node"`
+
+	SrcName		  string	`json:"src_name"`
+	SrcPhone	  string	`json:"src_phone"`
+	SrcStationID  int		`json:"src_station_id"`
+
+	DestName	  string	`json:"dest_name"`
+	DestPhone	  string	`json:"dest_phone"`
+	DestStationID int		`json:"dest_station_id"`
+	
+	// CreatedAt	  time.Time `json:"created_at"`
 }
