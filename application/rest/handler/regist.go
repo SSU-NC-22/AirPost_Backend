@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-	"math/rand"
+
+	// "math/rand"
 
 	"github.com/eunnseo/AirPost/application/adapter"
 	"github.com/eunnseo/AirPost/application/domain/model"
@@ -540,13 +541,15 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	}
 
 	// create order_num (date + src station id + dest station id + random)
-	t := delivery.CreatedAt.String()
-	date := t[2:4] + t[5:7] + t[8:10]
-	srcid := fmt.Sprintf("%03d", delivery.SrcStationID)
-	destid := fmt.Sprintf("%03d", delivery.DestStationID)
-	timeSource := rand.NewSource(time.Now().UnixNano())
-	random := fmt.Sprintf("%03d", rand.New(timeSource).Intn(999))
-	delivery.OrderNum = date + srcid + destid + random
+	// t := delivery.CreatedAt.String()
+	// date := t[2:4] + t[5:7] + t[8:10]
+	// srcid := fmt.Sprintf("%03d", delivery.SrcStationID)
+	// destid := fmt.Sprintf("%03d", delivery.DestStationID)
+	// timeSource := rand.NewSource(time.Now().UnixNano())
+	// random := fmt.Sprintf("%03d", rand.New(timeSource).Intn(999))
+	// delivery.OrderNum = date + srcid + destid + random
+
+	log.Println("delivery : ", delivery)
 
 	err := h.ru.RegistDelivery(&delivery)
 	if err != nil {

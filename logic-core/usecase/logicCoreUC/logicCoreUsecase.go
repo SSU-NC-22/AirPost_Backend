@@ -42,6 +42,10 @@ func NewLogicCoreUsecase(rr repository.RegistRepo,
 			log.Println("in NewLogicCoreUsecase, ld = ", ld)
 
 			lchs, err := lcu.ls.GetLogicChans(ld.NodeID)
+			if err != nil {
+				log.Print("Error in NewLogicCoreUsecase : ")
+				panic(err)
+			}
 			if err == nil {
 				log.Println("in NewLogicCoreUsecase, lchs = ", lchs)
 				for _, ch := range lchs {
