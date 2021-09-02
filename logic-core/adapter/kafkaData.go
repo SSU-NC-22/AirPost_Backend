@@ -3,6 +3,7 @@ package adapter
 import (
 	"time"
 	"log"
+	"strconv"
 
 	"github.com/eunnseo/AirPost/logic-core/domain/model"
 )
@@ -18,8 +19,8 @@ func init() {
 }
 
 type KafkaData struct {
-	// SensorID  int       `json:"sensor_id"`
-	NodeID    int       `json:"node_id"`
+	// NodeID    int       `json:"node_id"`
+	NodeID    string    `json:"node_id"`
 	Values    []float64 `json:"values"`
 	Timestamp string    `json:"timestamp"`
 }
@@ -27,13 +28,20 @@ type KafkaData struct {
 func KafkaToModel(d *KafkaData) (model.KafkaData, error) {
 	t, err := time.ParseInLocation(timeFmt, d.Timestamp, loc)
 	if err != nil {
-		log.Println("Error from ParseInLocation")
+		log.Println("Error in KafkaToModel from ParseInLocation")
 		return model.KafkaData{}, err
 	}
 	log.Println("Success KafkaToModel")
+
+	var tmpNodeID int
+	tmpNodeID, err = strconv.Atoi(d.NodeID)
+	if err != nil {
+		log.Println("Error in KafkaToModel from strconv.Atoi")
+		return model.KafkaData{}, err
+	}
+
 	return model.KafkaData{
-		// SensorID:  d.SensorID,
-		NodeID:    d.NodeID,
+		NodeID:    tmpNodeID,
 		Values:    d.Values,
 		Timestamp: t,
 	}, nil
