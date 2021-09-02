@@ -1,9 +1,9 @@
 package adapter
 
 import (
-	"time"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/eunnseo/AirPost/logic-core/domain/model"
 )
@@ -33,15 +33,19 @@ func KafkaToModel(d *KafkaData) (model.KafkaData, error) {
 	}
 	log.Println("Success KafkaToModel")
 
-	var tmpNodeID int
-	tmpNodeID, err = strconv.Atoi(d.NodeID)
+	nodeType := d.NodeID[:3]
+	log.Println("nodeType = ", nodeType)
+
+	var nodeID int
+	nodeID, err = strconv.Atoi(d.NodeID[3:])
 	if err != nil {
 		log.Println("Error in KafkaToModel from strconv.Atoi")
 		return model.KafkaData{}, err
 	}
+	log.Println("nodeID = ", nodeID)
 
 	return model.KafkaData{
-		NodeID:    tmpNodeID,
+		NodeID:    nodeID,
 		Values:    d.Values,
 		Timestamp: t,
 	}, nil

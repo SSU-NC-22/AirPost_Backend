@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/Shopify/sarama"
 	"github.com/eunnseo/AirPost/logic-core/adapter"
 	"github.com/eunnseo/AirPost/logic-core/domain/model"
 	"github.com/eunnseo/AirPost/logic-core/setting"
-	"github.com/Shopify/sarama"
 )
 
 var kafkaConsumer *group
@@ -89,11 +89,13 @@ func (consumer *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 		log.Println("kafka consumer :", string(message.Value))
 		ad := adapter.KafkaData{}
 		if err := json.Unmarshal(message.Value, &ad); err != nil {
+			log.Print(err)
 			continue
 		}
 
 		d, err := adapter.KafkaToModel(&ad)
 		if err != nil {
+			log.Print(err)
 			continue
 		}
 		
