@@ -108,6 +108,7 @@ func setRegistrationRoute(r *gin.Engine, h *handler.Handler) {
 		}
 		delivery := regist.Group("/delivery")
 		{
+			delivery.GET("/:orderNum", h.ListDeliveryByOrderNum)
 			delivery.POST("", h.RegistDelivery)
 		}
 	}  

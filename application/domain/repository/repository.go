@@ -57,4 +57,5 @@ type TopicRepo interface {
 type DeliveryRepo interface {
 	Create(*model.Delivery) error
 	Delete(*model.Delivery) error
+	FindsByOrderNum(ordernum int) (dl model.Delivery, err error)
 }

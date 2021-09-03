@@ -42,6 +42,7 @@ type RegistUsecase interface {
 
 	RegistDelivery(d *model.Delivery) error
 	// UnregistDelivery(d *model.Delivery) error
+	GetDeliveryByOrderNum(on int) (model.Delivery, error)
 }
 
 // for event channel

@@ -561,3 +561,20 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	c.JSON(http.StatusOK, delivery)
 	log.Println("===== handler RegistDelivery func fin =====")
 }
+
+func (h *Handler) ListDeliveryByOrderNum(c *gin.Context) {
+	log.Println("===== handler ListDeliveryByOrderNum func start =====")
+	ordernum, err := strconv.Atoi(c.Param("orderNum"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	delivery, err := h.ru.GetDeliveryByOrderNum(ordernum)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, delivery)
+	log.Println("===== handler ListDeliveryByOrderNum func fin =====")
+}

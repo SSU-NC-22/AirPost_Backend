@@ -23,3 +23,7 @@ func (dlr *deliveryRepo) Create(d *model.Delivery) error {
 func (dlr *deliveryRepo) Delete(d *model.Delivery) error {
 	return dlr.db.Delete(d).Error
 }
+
+func (dlr *deliveryRepo) FindsByOrderNum(ordernum int) (dl model.Delivery, err error) {
+	return dl, dlr.db.Where("order_num=?", ordernum).Find(&dl).Error
+}
