@@ -101,7 +101,7 @@ func (ae *ActuatorElement) Exec(d *model.LogicData) {
 			pbytes, _ := json.Marshal(res)
 			buff := bytes.NewBuffer(pbytes)
 			addr := (*adapter.AddrMap)[d.Node.Sid] // sink address
-			log.Println("\t\tin ActuatorElement.Exec, addr = ", addr)
+			log.Println("in Act.Exec, 받는 주소: " + "http://" + addr.Addr + "/actuator" + "전달내용: " + string(pbytes))
 			resp, err := http.Post("http://"+addr.Addr+"/actuator", "application/json", buff)
 			if err != nil {
 				panic(err)

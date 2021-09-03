@@ -41,7 +41,7 @@ type registRepo struct {
 	nodeRepo
 	// sensorRepo
 	sinkAddrRepo
-	nodeInfoRepo
+	nodeInfoRepo // not used
 }
 
 /**************************************************************/
