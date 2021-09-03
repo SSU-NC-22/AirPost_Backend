@@ -35,10 +35,10 @@ func GetenvStr(target *string, init, env string) {
 }
 
 func (hs *Health) Getenv() {
-	GetenvStr(&hs.Server, "221.140.150.7:8083", "HEALTH_SERVER")
-	GetenvStr(&hs.Listen, "221.140.150.7:8085", "HEALTH_LISTEN")
-	// GetenvStr(&hs.Server, "192.168.0.18:8083", "HEALTH_SERVER")
-	// GetenvStr(&hs.Listen, "192.168.0.18:8085", "HEALTH_LISTEN")
+	// GetenvStr(&hs.Server, "221.140.150.7:8083", "HEALTH_SERVER")
+	// GetenvStr(&hs.Listen, "221.140.150.7:8085", "HEALTH_LISTEN")
+	GetenvStr(&hs.Server, "192.168.0.18:8083", "HEALTH_SERVER")
+	GetenvStr(&hs.Listen, "192.168.0.18:8085", "HEALTH_LISTEN")
 }
 
 var Healthsetting = &Health{}
