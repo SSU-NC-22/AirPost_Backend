@@ -20,6 +20,15 @@ func NewEventUsecase(rr repository.RegistRepo, ls service.LogicService) *eventUs
 	}
 }
 
+func (eu *eventUsecase) CreateSink(s *adapter.Sink) error {
+	err := eu.rr.AppendSinkAddr(s.ID, &s.Addr)
+	if err != nil {
+		log.Println("in eu.CreateSink, AppendSinkAddr error")
+		return err
+	}
+	return nil
+}
+
 func (eu *eventUsecase) DeleteSink(nl []adapter.Node) error {
 	for _, n := range nl {
 		eu.rr.DeleteNode(n.ID)

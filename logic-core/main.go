@@ -104,6 +104,7 @@ func RegistLogicService(ls usecase.EventUsecase) {
 
 	for _, s := range sinks {
 		log.Println("->", s.Name)
+		ls.CreateSink(&s)
 		for _, n := range s.Nodes {
 			ls.CreateNode(&n, s.Name)
 		}

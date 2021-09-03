@@ -5,6 +5,7 @@ import (
 )
 
 type EventUsecase interface {
+	CreateSink(s *adapter.Sink) error
 	DeleteSink(nl []adapter.Node) error
 	CreateNode(n *adapter.Node, sn string) error
 	DeleteNode(n *adapter.Node) error
