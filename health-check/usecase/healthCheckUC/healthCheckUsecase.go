@@ -3,6 +3,7 @@ import (
 	"encoding/json"
 	"io"
 	"log"
+	"fmt"
 	"net"
 	"time"
 
@@ -37,21 +38,11 @@ func NewHealthCheckUsecase(sr repository.StatusRepo, e chan interface{}) *health
 			go hu.healthCheck(conn)
 		}
 	}()
-	/*
-		go func() {
-			tick := time.Tick(time.Duration(setting.StatusSetting.Tick) * time.Second)
-			for {
-				select {
-				case <-tick:
-					hu.healthCheck()
-				}
-			}
-		}()
-	*/
 	return hu
 }
 
 func (hu *healthCheckUsecase) healthCheck(conn net.Conn) {
+	log.Println("===== healthCheck start =====")
 
 	// for {
 	recvBuf := make([]byte, 4096)
@@ -65,36 +56,36 @@ func (hu *healthCheckUsecase) healthCheck(conn net.Conn) {
 		return
 	}
 	if n > 0 {
+		log.Println("health Info : ", string(recvBuf))
 		var healthInfo adapter.HealthInfo
 		var states adapter.States
-		// log.Println("처음 온 데이터 :", recvBuf)
 		recvBuf = ClearPadding(recvBuf)
-		// log.Println("recv Buf2 :", recvBuf)
 		json.Unmarshal(recvBuf, &healthInfo)
 
 		states.State = healthInfo
-		states.Timestamp = string(time.Now().Unix())
+		states.Timestamp = fmt.Sprint(time.Now().Unix())
 		log.Println("convert to json :", healthInfo)
 		//test_start
 		tmphealth := hu.sr.UpdateTable(states) // 변화가 생긴 것들만 뭘로 변했는지 알려줌 ex : {1 [{1 1} {2 1} {8 0}]}
-		log.Println(tmphealth)
+		log.Println("change occurred :", tmphealth)
 
-		hu.event <- tmphealth
-		// //test_end
-
-		// //hu.event <- hu.sr.UpdateTable(sinknum, res)
-
+		hu.event <- tmphealth // go to wu.event in NewWebsocketUsecase websocketUsecase.go
 	}
 	// }
 }
 
 func ClearPadding(buf []byte) []byte {
 	var res []byte
+	isCleared := false
 	for i := 1; i < 4096; i++ {
 		if (buf[i-1] == 125) && (buf[i] == 0) {
 			res = buf[:i]
+			isCleared = true
 			break
 		}
+	}
+	if !isCleared {
+		return buf
 	}
 	return res
 }

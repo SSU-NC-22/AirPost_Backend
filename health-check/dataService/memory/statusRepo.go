@@ -15,8 +15,7 @@ var (
 
 type statusRepo struct {
 	mu *sync.RWMutex
-	// map[sinkID]map[nodeID]
-	table map[int]map[int]model.Status // 이차원 맵 model.Status가 원소 (0,1,2)
+	table map[int]map[int]model.Status // map[sinkID]map[nodeID]
 }
 
 var statusTable *statusRepo
@@ -58,15 +57,14 @@ func (sr *statusRepo) UpdateTable(states adapter.States) []model.NodeStatus { //
 
 func (sr *statusRepo) updateNodeStatus(sinkID int, ns []adapter.NodeState, t time.Time) []model.NodeStatus { // 어답더 계층의 NodeState상태와 메모리 계층의 statusRepo의 status table을 동기화시켜 주는 것
 	res := []model.NodeStatus{}
-	// rres := model.SinkStatus{}
 	nsTable := map[int]bool{}
 
 	// update the status checked from the sink node
 	for _, v := range ns { // v는 NodeSate 배열 중 한 원소
 		nsTable[v.NodeID] = true
 		nodeState, ok := sr.table[sinkID][v.NodeID]
-		// if new nodeState, regist new state
-		if !ok {
+		
+		if !ok { // if new nodeState, regist new state
 			tempState := model.NewStatus(v.State, t)
 			sr.table[sinkID][v.NodeID] = tempState
 			res = append(res, model.NodeStatus{NodeID: v.NodeID, State: tempState.State, Battery: v.Battery})
@@ -93,59 +91,3 @@ func (sr *statusRepo) updateNodeStatus(sinkID int, ns []adapter.NodeState, t tim
 	}
 	return res
 }
-
-// func (sr *statusRepo) GetKeys() []string {
-// 	keys := make([]string, 0, len(sr.table))
-// 	for k := range sr.table {
-// 		keys = append(keys, k)
-// 	}
-// 	return keys
-// }
-
-// func (sr *statusRepo) Create(key string, value model.Status) error {
-// 	if _, ok := sr.table[key]; ok {
-// 		return errors.New("statusRepo : alreay exist status")
-// 	}
-// 	sr.table[key] = value
-// 	return nil
-// }
-
-// func (sr *statusRepo) Delete(key string) error {
-// 	if _, ok := sr.table[key]; !ok {
-// 		return errors.New("statusRepo : cannot find status")
-// 	}
-// 	delete(sr.table, key)
-// 	return nil
-// }
-
-// func (sr *statusRepo) Get(key string) (model.Status, error) {
-// 	if s, ok := sr.table[key]; !ok {
-// 		return model.Status{}, errors.New("statusRepo : cannot find status")
-// 	} else {
-// 		return s, nil
-// 	}
-
-// }
-
-// func (sr *statusRepo) Update(key string, value model.Status) error {
-// 	if _, ok := sr.table[key]; !ok {
-// 		return errors.New("statusRepo : cannot find status")
-// 	}
-
-// 	sr.table[key] = value
-// 	return nil
-// }
-
-// func (sr *statusRepo) GetHealthInfo() []adapter.HealthInfo {
-// 	// sr.mu.RLock()
-// 	// defer sr.mu.Unlock()
-
-// 	res := make([]adapter.HealthInfo, 0, len(sr.table))
-// 	for k, v := range sr.table {
-// 		res = append(res, adapter.HealthInfo{
-// 			UUID:  k,
-// 			State: v.State,
-// 		})
-// 	}
-// 	return res
-// }

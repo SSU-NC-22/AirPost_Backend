@@ -4,6 +4,7 @@ package setting
 import (
 	"os"
 	"strconv"
+	"fmt"
 )
 
 func GetenvInt(target *int, init int, env string) {
@@ -83,5 +84,5 @@ func init() {
 	Appsetting.Getenv()
 	StatusSetting.Getenv()
 
-	//fmt.Printf("Health : &v\nApp : %v\nStatus : %v\n\n", Healthsetting, Appsetting, StatusSetting)
+	fmt.Printf("Health : %v\nApp : %v\nStatus : %v\n\n", Healthsetting, Appsetting, StatusSetting)
 }

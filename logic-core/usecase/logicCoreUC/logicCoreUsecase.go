@@ -34,7 +34,7 @@ func NewLogicCoreUsecase(rr repository.RegistRepo,
 		for rawData := range in {
 			log.Println("2")
 
-			ld, err := lcu.ToLogicData(&rawData)
+			ld, err := lcu.ToLogicData(&rawData) // 데이터 보강
 			if err != nil {
 				log.Println("Error in NewLogicCoreUsecase in ToLogicData")
 				continue

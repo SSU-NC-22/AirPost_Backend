@@ -1,6 +1,7 @@
 package websocketUC
 
 import (
+	"log"
 	"github.com/dustin/go-broadcast"
 )
 
@@ -17,7 +18,8 @@ func NewWebsocketUsecase(e chan interface{}) *websocketUsecase {
 
 	go func() {
 		for msg := range wu.event {
-			wu.Submit(msg)
+			log.Println("in websocket usecase, submit msg")
+			wu.Submit(msg) // send to front in main.go
 		}
 	}()
 

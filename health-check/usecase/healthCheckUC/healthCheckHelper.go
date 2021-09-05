@@ -3,8 +3,9 @@ package healthCheckUC
 import (
 	"fmt"
 	"time"
+	"log"
 
-	"github.com/eunnseo/AirPost/health-check/adapter"
+	// "github.com/eunnseo/AirPost/health-check/adapter"
 	"github.com/eunnseo/AirPost/health-check/setting"
 	"github.com/go-resty/resty/v2"
 )
@@ -15,16 +16,18 @@ var (
 )
 
 func init() {
+	log.Println("init in healthCheckHelper")
 	appClient = resty.New()
 	appClient.SetRetryCount(2).SetRetryWaitTime(100 * time.Millisecond).SetTimeout(500 * time.Millisecond)
 	url = fmt.Sprintf("http://%s%s", setting.Appsetting.Server, setting.Appsetting.RequestPath)
+	log.Println("url : ", url)
 }
 
-func getSinkList() ([]adapter.Sink, error) {
-	res := []adapter.Sink{}
-	resp, err := appClient.R().SetResult(&res).Get(url)
-	if resp.IsError() {
-		return nil, err
-	}
-	return res, nil
-}
+// func getSinkList() ([]adapter.Sink, error) {
+// 	res := []adapter.Sink{}
+// 	resp, err := appClient.R().SetResult(&res).Get(url)
+// 	if resp.IsError() {
+// 		return nil, err
+// 	}
+// 	return res, nil
+// }
