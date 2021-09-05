@@ -7,77 +7,22 @@ import (
 )
 
 func main() {
-	conn, err := net.Dial("tcp", "10.5.110.11:8085")
+	log.Println("TCP Client start")
+	conn, err := net.Dial("tcp", "192.168.0.18:8085")
 	if nil != err {
 		log.Fatalf("failed to connect to server")
 	}
+	// defer conn.Close()
 
-	// some event happens
-	conn.Write([]byte(`
-	{
-		"sid": 1,
-		"state": [{
-			"nid": 1,
-			"state": true
-		},{
-			"nid": 2,
-			"state": false
-		},{
-			"nid": 4,
-			"state": false
-		},{
-			"nid": 8,
-			"state": false
-		},{
-			"nid": 27,
-			"state": false
-		}]
+	log.Println("success to connect to server")
+	send := `{"sid": 1, "state": [{"nid": 1, "state": true, "battery": 70},{"nid": 2, "state": false, "battery": 80}]}`
+
+	_, err = conn.Write([]byte(send))
+	if err != nil {
+		log.Println("failed to write data : ", err)
+	} else {
+		log.Println("success to write data \nmsg : ", send)
 	}
-	`))
-	/*
-		{
-			"sid": 1,
-			"state": [{
-				"nid": 1,
-				"state": false
-			},{
-				"nid": 2,
-				"state": true
-			},{
-				"nid": 4,
-				"state": false
-			},{
-				"nid": 8,
-				"state": true
-			},{
-				"nid": 27,
-				"state": true
-			}]
-		}
-		{
-			"sid": 1,
-			"state": [{
-				"nid": 1,
-				"state": false
-			},{
-				"nid": 2,
-				"state": true
-			},{
-				"nid": 4,
-				"state": false
-			},{
-				"nid": 8,
-				"state": true
-			},{
-				"nid": 27,
-				"state": true
-			}]
-		}
-	*/
-	//conn.Write([]byte("005111111111111"))
-	// for {
-	// 	// heartbeat
-	// 	conn.Write([]byte("110210101012"))
-	// 	time.Sleep(time.Duration(3) * time.Second)
-	// }
+
+	// 	time.Sleep(time.Duration(1) * time.Second)
 }
