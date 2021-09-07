@@ -33,7 +33,9 @@ func main() {
 		wu.Register(listen)
 		defer wu.Unregister(listen)
 
-		conn, err := websocket.Upgrade(c.Writer, c.Request, nil, 1024, 1024)
+		// conn, err := websocket.Upgrade(c.Writer, c.Request, nil, 1024, 1024)
+		var upgrader = websocket.Upgrader{}
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			log.Printf("upgrade: %s", err.Error())
 		}
@@ -41,7 +43,11 @@ func main() {
 
 		for data := range listen {
 			log.Printf("read %v\n", data)
-			conn.WriteJSON(data)
+			err := conn.WriteJSON(data)
+			if err != nil {
+				log.Println("conn.WriteJSON error : ", err)
+			}
+			log.Println("after conn.WriteJSON")
 		}
 		fmt.Println("disconnect websocket!")
 	})
