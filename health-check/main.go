@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"net/http"
 
 	"github.com/eunnseo/AirPost/health-check/dataService/memory"
 	"github.com/eunnseo/AirPost/health-check/setting"
@@ -33,13 +34,26 @@ func main() {
 		wu.Register(listen)
 		defer wu.Unregister(listen)
 
-		// conn, err := websocket.Upgrade(c.Writer, c.Request, nil, 1024, 1024)
-		var upgrader = websocket.Upgrader{}
+		var upgrader = websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				return  true
+		   },
+		}
 		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 		if err != nil {
 			log.Printf("upgrade: %s", err.Error())
+			return
 		}
 		fmt.Println("connect websocket!")
+
+		defer func() {
+			err := conn.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}()
 
 		for data := range listen {
 			log.Printf("read %v\n", data)
