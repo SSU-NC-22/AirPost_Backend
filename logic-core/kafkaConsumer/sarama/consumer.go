@@ -3,6 +3,7 @@ package sarama
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/Shopify/sarama"
@@ -83,10 +84,10 @@ func (consumer *consumer) Cleanup(sarama.ConsumerGroupSession) error {
 }
 
 func (consumer *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	log.Println("===== consumer ConsumeClaim func start =====")
+	// log.Println("===== consumer ConsumeClaim func start =====")
 	for message := range claim.Messages() {
 		
-		log.Println("kafka consumer :", string(message.Value))
+		fmt.Println("\n\nkafka consumer :", string(message.Value))
 		ad := adapter.KafkaData{}
 		if err := json.Unmarshal(message.Value, &ad); err != nil {
 			log.Print(err)
@@ -99,8 +100,8 @@ func (consumer *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 			continue
 		}
 		
-		log.Println("in ConsumeClaim, d = ", d)
-		log.Println("1")
+		// log.Println("in ConsumeClaim, d = ", d)
+		// log.Println("1")
 		consumer.out <- d // go to "in" in NewLogicCoreUsecase logicCoreUsecase.go
 	}
 
