@@ -45,6 +45,15 @@ func (h *Handler) ListSinks(c *gin.Context) {
 		if page.Page == 1 {
 			pages = h.ru.GetSinkPageCount(page.Size)
 		}
+
+		for i, sink := range sinks {
+			nodes, err := h.ru.GetNodesBySinkID(sink.ID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			sinks[i].Nodes = append(sink.Nodes, nodes...)
+		}
 		c.JSON(http.StatusOK, gin.H{"sinks": sinks, "pages": pages})
 		return
 	} else {
@@ -52,6 +61,15 @@ func (h *Handler) ListSinks(c *gin.Context) {
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
+		}
+
+		for i, sink := range sinks {
+			nodes, err := h.ru.GetNodesBySinkID(sink.ID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			sinks[i].Nodes = append(sink.Nodes, nodes...)
 		}
 		c.JSON(http.StatusOK, sinks)
 		return
@@ -130,7 +148,6 @@ func (h *Handler) UnregistSink(c *gin.Context) {
 // @Success 201 {object} adapter.NodePage "if page query is exist, return pagenation result. pages only valid when page is 1."
 // @Router /regist/node [get]
 func (h *Handler) ListNodes(c *gin.Context) {
-	fmt.Println("\n----- handler ListNodes func start -----")
 	var (
 		err    error
 		nodes  []model.Node
@@ -140,8 +157,6 @@ func (h *Handler) ListNodes(c *gin.Context) {
 	)
 
 	if c.Bind(&page); page.IsBinded() {
-		fmt.Println("\n\t----- page -----")
-		fmt.Println(page)
 		if page.Size == 0 {
 			page.Size = 10
 		}
@@ -152,10 +167,8 @@ func (h *Handler) ListNodes(c *gin.Context) {
 		if page.Page == 1 {
 			pages = h.ru.GetNodePageCount(page)
 		}
-		fmt.Println("\n\t----- nodes -----")
 		fmt.Println(nodes)
 		c.JSON(http.StatusOK, gin.H{"nodes": nodes, "pages": pages})
-		fmt.Println("\n----- handler ListNodes func fin -----")
 		return
 	} else if c.Bind((&square)); square.IsBinded() { // map
 		if nodes, err = h.ru.GetNodesSquare(square); err != nil {
