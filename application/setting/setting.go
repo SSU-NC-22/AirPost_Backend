@@ -109,7 +109,7 @@ func (ss *DroneSink) Getenv() {
 	}
 	ss.Addr = os.Getenv("SINK_ADDR")
 	if ss.Addr == "" {
-		ss.Addr = "111.111.111:8080"
+		ss.Addr = "192.168.0.18:5000"
 	}
 	GetenvInt(&ss.TopicID, 1, "SINK_TOPICID")
 }
@@ -129,7 +129,7 @@ func (ss *StationSink) Getenv() {
 	}
 	ss.Addr = os.Getenv("SINK_ADDR")
 	if ss.Addr == "" {
-		ss.Addr = "222.222.222:8080"
+		ss.Addr = "192.168.0.18:5000"
 	}
 	GetenvInt(&ss.TopicID, 1, "SINK_TOPICID")
 }
@@ -149,7 +149,7 @@ func (ss *TagSink) Getenv() {
 	}
 	ss.Addr = os.Getenv("SINK_ADDR")
 	if ss.Addr == "" {
-		ss.Addr = "333.333.333:8080"
+		ss.Addr = "192.168.0.18:5000"
 	}
 	GetenvInt(&ss.TopicID, 1, "SINK_TOPICID")
 }
