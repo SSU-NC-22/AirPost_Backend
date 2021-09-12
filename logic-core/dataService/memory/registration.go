@@ -244,7 +244,7 @@ func (dr *deliveryRepo) FindDelivery(key int) (*model.Delivery, error) {
 
 	d, ok := dr.dinfo[key]
 	if !ok {
-		return nil, errors.New("deliveryRepo: cannot find path")
+		return nil, errors.New("deliveryRepo: cannot find delivery")
 	}
 	return &d, nil
 }
@@ -252,7 +252,7 @@ func (dr *deliveryRepo) FindDelivery(key int) (*model.Delivery, error) {
 func (dr *deliveryRepo) CreateDelivery(key int, d *model.Delivery) error {
 	_, ok := dr.dinfo[key]
 	if ok {
-		return errors.New("deliveryRepo: already exist node")
+		return errors.New("deliveryRepo: already exist delivery")
 	}
 	dr.dinfo[key] = *d
 	return nil
@@ -261,7 +261,7 @@ func (dr *deliveryRepo) CreateDelivery(key int, d *model.Delivery) error {
 func (dr *deliveryRepo) DeleteDelivery(key int) error {
 	_, ok := dr.dinfo[key]
 	if !ok {
-		return errors.New("deliveryRepo: cannot find path")
+		return errors.New("deliveryRepo: cannot find delivery")
 	}
 	delete(dr.dinfo, key)
 	return nil
