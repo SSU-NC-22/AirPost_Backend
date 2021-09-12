@@ -59,6 +59,10 @@ func (ru *registUsecase) GetNodesBySinkID(sinkid int) ([]model.Node, error) {
 	return ru.ndr.FindsBySinkIDWithSensorValues(sinkid)
 }
 
+func (ru *registUsecase) GetNodeByID(id int) (*model.Node, error) {
+	return ru.ndr.FindsByID(id)
+}
+
 func (ru *registUsecase) RegistNode(n *model.Node) error {
 	return ru.ndr.Create(n)
 }

@@ -50,6 +50,11 @@ func (ndr *nodeRepo) FindsBySinkIDWithSensorValues(sinkid int) (nl []model.Node,
 	return nl, ndr.db.Where("sink_id=?", sinkid).Preload("SensorValues", orderByASC).Find(&nl).Error
 }
 
+func (ndr *nodeRepo) FindsByID(id int) (*model.Node, error) {
+	n := &model.Node{}
+	return n, ndr.db.Where("id=?", id).Omit("SensorValues").Omit("Logics").Find(n).Error
+}
+
 func (ndr *nodeRepo) Create(n *model.Node) error {
 	return ndr.db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Omit("SensorValues").Omit("Logics").Create(n).Error; err != nil {
