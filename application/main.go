@@ -29,9 +29,12 @@ func main() {
 	lsr := sql.NewLogicServiceRepo()
 	tpr := sql.NewTopicRepo()
 	acr := sql.NewActuatorkRepo()
-	dlr := sql.NewDeliveryRepo()
 
-	ru := registUsecase.NewRegistUsecase(sir, ndr, lgr, lsr, tpr, acr, dlr)
+	dlr := sql.NewDeliveryRepo()
+	ptr := sql.NewPathRepo()
+	sdr := sql.NewStationDroneRepo()
+
+	ru := registUsecase.NewRegistUsecase(sir, ndr, lgr, lsr, tpr, acr, dlr, ptr, sdr)
 	eu := eventUsecase.NewEventUsecase(sir, lsr)
 
 	h := handler.NewHandler(ru, eu)
@@ -108,8 +111,12 @@ func setRegistrationRoute(r *gin.Engine, h *handler.Handler) {
 		}
 		delivery := regist.Group("/delivery")
 		{
-			delivery.GET("/:orderNum", h.ListDeliveryByOrderNum)
+			delivery.GET("/:orderNum", h.GetDroneID)
 			delivery.POST("", h.RegistDelivery)
+		}
+		tracking := regist.Group("/tracking")
+		{
+			tracking.GET("/:orderNum", h.GetTracking)
 		}
 	}  
 }

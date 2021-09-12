@@ -3,15 +3,20 @@ package handler
 import (
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
 
-	// "math/rand"
-
 	"github.com/eunnseo/AirPost/application/adapter"
 	"github.com/eunnseo/AirPost/application/domain/model"
 	"github.com/gin-gonic/gin"
+)
+
+const (
+	DRONE   = 1 // drone sink id
+	STATION = 2 // station sink id
+	TAG 	= 3 // tag sink id
 )
 
 /**************************************************************/
@@ -191,7 +196,6 @@ func (h *Handler) ListNodes(c *gin.Context) {
 
 // ListNodesBySink ...
 func (h *Handler) ListNodesBySink(c *gin.Context) {
-	fmt.Println("\n----- handler ListNodesBySink func start -----")
 	sinkid, err := strconv.Atoi(c.Param("sinkid"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -216,25 +220,130 @@ func (h *Handler) ListNodesBySink(c *gin.Context) {
 // @Success 200 {object} model.Node "include sink, sink.topic, sensors, sensors.logics info"
 // @Router /regist/node [post]
 func (h *Handler) RegistNode(c *gin.Context) {
-	fmt.Println("\n----- handler RegistNode func start -----")
+	log.Println("===== handler RegistNode func start =====")
 	var node model.Node
 	if err := c.ShouldBindJSON(&node); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	fmt.Println("\n\t----- node -----")
-	fmt.Println(node)
-	err := h.ru.RegistNode(&node)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+	
+	log.Println("node = ", node)
+
+	if node.Type[:3] == "DRO" {
+		log.Println("regist drone node")
+
+		stationid, err := strconv.Atoi(node.Type[4:])
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		node.Type = node.Type[:3]
+
+		log.Println("before RegistNode, node = ", node)
+		err = h.ru.RegistNode(&node)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		// drone 등록 시 station_drone 추가
+		sd := model.StationDrone{
+			StationID: stationid,
+			DroneID:   node.ID,
+		}
+
+		err = h.ru.RegistStationDrone(&sd)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	} else if node.Type[:3] == "STA" {
+		log.Println("regist station node")
+
+		err := h.ru.RegistNode(&node)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		tags, err := h.ru.GetNodesBySinkID(TAG)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		for _, tag := range tags {
+			log.Println("tag #", tag.ID)
+			/* 
+			// using naver map api
+			start := node.LocLon + "," + node.LocLat
+			goal := tag.LocLon + "," + tag.LocLat
+			client := resty.New()
+			resp, err := client.R().
+				SetQueryString("start=" + start + "&goal=" + goal).
+				SetHeader("X-NCP-APIGW-API-KEY-ID", "6a14n8xual").
+				SetHeader("X-NCP-APIGW-API-KEY", "vej8eUozJVRvtrdCZcTlV4ea9ljEriJUxdEa7j42").
+				Get("https://naveropenapi.apigw.ntruss.com/map-direction/v1/driving")
+			if err != nil {
+				panic(err)
+			}
+			*/
+
+			// calc distance
+			powLon := math.Pow((node.LocLon - tag.LocLon), 2)
+			powLat := math.Pow((node.LocLat - tag.LocLat), 2)
+			dist := math.Pow((powLon + powLat), 0.5)
+			
+			path := model.Path{
+				StationID: node.ID,
+				TagID: tag.ID,
+				Path: "",
+				Distance: dist,
+			}
+			log.Println("path : ", path)
+			if err := h.ru.RegistPath(&path); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		}
+		// resp.Body.Close()		
+	} else if node.Type[:3] == "TAG" {
+		log.Println("regist tag node")
+
+		err := h.ru.RegistNode(&node)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		stations, err := h.ru.GetNodesBySinkID(STATION)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		for _, station := range stations {
+			log.Println("station #", station.ID)
+			// calc distance
+			powLon := math.Pow((node.LocLon - station.LocLon), 2)
+			powLat := math.Pow((node.LocLat - station.LocLat), 2)
+			dist := math.Pow((powLon + powLat), 0.5)
+			
+			path := model.Path{
+				StationID: station.ID,
+				TagID: node.ID,
+				Path: "",
+				Distance: dist,
+			}
+			log.Println("path : ", path)
+			if err := h.ru.RegistPath(&path); err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+		}
 	}
 
 	h.eu.CreateNodeEvent(&node)
 	go h.eu.PostToSink(node.SinkID)
 	c.JSON(http.StatusOK, node)
-
-	fmt.Println("\n----- handler RegistNode func fin -----")
 }
 
 // UnregistNode ...
@@ -553,18 +662,59 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		return
 	}
 
-	// create order_num (date + src station id + dest station id + random)
-	// t := delivery.CreatedAt.String()
-	// date := t[2:4] + t[5:7] + t[8:10]
-	// srcid := fmt.Sprintf("%03d", delivery.SrcStationID)
-	// destid := fmt.Sprintf("%03d", delivery.DestStationID)
-	// timeSource := rand.NewSource(time.Now().UnixNano())
-	// random := fmt.Sprintf("%03d", rand.New(timeSource).Intn(999))
-	// delivery.OrderNum = date + srcid + destid + random
+	// SrcStation의 드론들 중 사용자가 사용할 드론을 정함
+	sdl, err := h.ru.GetStationDroneByStationID(delivery.SrcStationID)
+	if err != nil || len(sdl) == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
+	droneid := -1
+	for _, sd := range(sdl) {
+		if sd.Reserved == 0 {
+			droneid = sd.DroneID
+			break
+		}
+	}
+	if droneid == -1 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	log.Println("droneid = ", droneid)
+
+	// Regist Delivery with DroneID and Drone
+	drone, err := h.ru.GetNodeByID(droneid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	delivery.Drone = *drone
+	delivery.DroneID = droneid
 	log.Println("delivery : ", delivery)
 
-	err := h.ru.RegistDelivery(&delivery)
+	err = h.ru.RegistDelivery(&delivery)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// SrcStation과 연결된 drone unregist 
+	sd := model.StationDrone{
+		StationID: delivery.SrcStationID,
+		DroneID:   droneid,
+	}
+	err = h.ru.UnregistStationDrone(&sd)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// DestStation에 연결할 drone regist
+	sd = model.StationDrone{
+		StationID: delivery.DestStationID,
+		DroneID:   droneid,
+	}
+	err = h.ru.RegistStationDrone(&sd)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -575,8 +725,8 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	log.Println("===== handler RegistDelivery func fin =====")
 }
 
-func (h *Handler) ListDeliveryByOrderNum(c *gin.Context) {
-	log.Println("===== handler ListDeliveryByOrderNum func start =====")
+func (h *Handler) GetDroneID(c *gin.Context) {
+	log.Println("===== handler GetDroneID func start =====")
 	ordernum, err := strconv.Atoi(c.Param("orderNum"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -588,6 +738,51 @@ func (h *Handler) ListDeliveryByOrderNum(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, delivery)
-	log.Println("===== handler ListDeliveryByOrderNum func fin =====")
+
+	c.JSON(http.StatusOK, gin.H{"drone_id": delivery.DroneID})
+	log.Println("===== handler GetDroneID func fin =====")
+}
+
+/**************************************************************/
+/* Tracking service handler                                   */
+/**************************************************************/
+func (h *Handler) GetTracking(c *gin.Context) {
+	log.Println("===== handler GetTracking func start =====")
+	ordernum, err := strconv.Atoi(c.Param("orderNum"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	delivery, err := h.ru.GetDeliveryByOrderNum(ordernum)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	log.Println("delivery : ", delivery)
+
+	src, err := h.ru.GetNodeByID(delivery.SrcStationID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	dest, err := h.ru.GetNodeByID(delivery.DestStationID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	tracking := model.Tracking{
+		SrcLat:   src.LocLat,
+		SrcLng:	  src.LocLon,
+		DestLat:  dest.LocLat,
+		DestLng:  dest.LocLon,
+		DroneLat: 0,
+		DroneLng: 0,
+	}
+	log.Println("tracking : ", tracking)
+
+	c.JSON(http.StatusOK, tracking)
+	log.Println("===== handler GetTracking func fin =====")
 }
