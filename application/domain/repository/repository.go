@@ -21,6 +21,7 @@ type NodeRepo interface {
 	FindsPage(p adapter.Page) (nl []model.Node, err error)
 	FindsSquare(sq adapter.Square) (nl []model.Node, err error)
 	FindsBySinkIDWithSensorValues(sinkid int) (nl []model.Node, err error)
+	FindsByID(id int) (*model.Node, error)
 	Create(*model.Node) error
 	Delete(*model.Node) error
 }
@@ -55,7 +56,18 @@ type TopicRepo interface {
 }
 
 type DeliveryRepo interface {
+	FindsByOrderNum(ordernum int) (dl model.Delivery, err error)
 	Create(*model.Delivery) error
 	Delete(*model.Delivery) error
-	FindsByOrderNum(ordernum int) (dl model.Delivery, err error)
+}
+
+type PathRepo interface {
+	Create(*model.Path) error
+	Delete(*model.Path) error
+}
+
+type StationDroneRepo interface {
+	FindsByStationID(stationid int) ([]model.StationDrone, error)
+	Create(*model.StationDrone) error
+	Delete(*model.StationDrone) error
 }

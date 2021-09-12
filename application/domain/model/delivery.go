@@ -22,3 +22,36 @@ type Delivery struct {
 func (Delivery) TableName() string {
 	return "deliveries"
 }
+
+type StationDrone struct{
+	ID		  int  `json:"id" gorm:"primaryKey"`
+	StationID int  `json:"station_id" gorm:"not null"`
+	Station	  Node `json:"station" gorm:"foreignKey:StationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	DroneID   int  `json:"drone_id" gorm:"not null"`
+	Reserved  int  `json:"reserved" gorm:"not null"` // 0 : 사용가능, 1 : 예약됨
+}
+
+func (StationDrone) TableName() string {
+	return "station_drone"
+}
+
+type Path struct {
+	ID		  int	  `json:"id" gorm:"primaryKey"`
+	StationID int	  `json:"station_id" gorm:"not null"`
+	TagID 	  int	  `json:"tag_id" gorm:"not null"`
+	Path   	  string  `json:"path" gorm:"type:text;not null"`
+	Distance  float64 `json:"distance" gorm:"not null"`
+}
+
+func (Path) TableName() string {
+	return "paths"
+}
+
+type Tracking struct {
+	SrcLat	 float64 `json:"srcLat"`
+	SrcLng	 float64 `json:"srcLng"`
+	DestLat	 float64 `json:"destLat"`
+	DestLng	 float64 `json:"destLng"`
+	DroneLat float64 `json:"droneLat"`
+	DroneLng float64 `json:"droneLng"`
+}

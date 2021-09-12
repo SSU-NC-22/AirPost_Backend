@@ -25,7 +25,7 @@ func Setup() {
 		&model.Topic{}, &model.LogicService{},
 		&model.Sink{}, &model.Node{},
 		&model.SensorValue{}, &model.Logic{}, &model.Actuator{},
-		&model.Delivery{},
+		&model.Delivery{}, &model.Path{}, &model.StationDrone{},
 	)
 
 	// dbConn.Model(&model.LogicService{}).AddForeignKey("topic_id", "topics(id)", "CASCADE", "CASCADE")

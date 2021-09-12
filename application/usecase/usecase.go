@@ -20,6 +20,7 @@ type RegistUsecase interface {
 	GetNodesPage(p adapter.Page) ([]model.Node, error)
 	GetNodesSquare(sq adapter.Square) ([]model.Node, error)
 	GetNodesBySinkID(sinkid int) ([]model.Node, error)
+	GetNodeByID(id int) (*model.Node, error)
 	RegistNode(n *model.Node) error
 	UnregistNode(n *model.Node) error
 
@@ -40,9 +41,16 @@ type RegistUsecase interface {
 	RegistTopic(t *model.Topic) error
 	UnregistTopic(t *model.Topic) error
 
-	RegistDelivery(d *model.Delivery) error
-	// UnregistDelivery(d *model.Delivery) error
 	GetDeliveryByOrderNum(on int) (model.Delivery, error)
+	RegistDelivery(d *model.Delivery) error
+	UnregistDelivery(d *model.Delivery) error
+
+	RegistPath(p *model.Path) error
+	UnregistPath(p *model.Path) error
+
+	GetStationDroneByStationID(stationid int) ([]model.StationDrone, error)
+	RegistStationDrone(sd *model.StationDrone) error
+	UnregistStationDrone(sd *model.StationDrone) error
 }
 
 // for event channel
@@ -54,7 +62,6 @@ type EventUsecase interface {
 	DeleteSinkEvent(s *model.Sink) error
 	CreateNodeEvent(n *model.Node) error
 	DeleteNodeEvent(n *model.Node) error
-	// DeleteSensorEvent(s *model.Sensor) error
 	CreateLogicEvent(l *model.Logic) error
 	DeleteLogicEvent(l *model.Logic) error
 
