@@ -2,6 +2,9 @@ package adapter
 
 import (
 	"encoding/json"
+	"log"
+	"math"
+	"time"
 
 	"github.com/eunnseo/AirPost/logic-core/domain/model"
 )
@@ -42,10 +45,11 @@ type Logic struct {
 	ID		int    `json:"id"`
 	Name	string `json:"name"`
 	Elems	string `json:"elems"`
-	NodeID	int    `json:"node_id"`	// original name was SensorID
+	NodeID	int    `json:"node_id"`
 }
 
 func LogicToModel(l *Logic) (model.Logic, error) {
+	log.Println("LogicToModel")
 	var elems []model.Element
 	if err := json.Unmarshal([]byte(l.Elems), &elems); err != nil {
 		return model.Logic{}, err
@@ -70,7 +74,7 @@ func LogicsToModels(ll []Logic) []model.Logic {
 }
 
 type SensorValue struct {
-	NodeID		int    `json:"node_id"`		// original name was SensorID
+	NodeID		int    `json:"node_id"`
 	ValueName	string `json:"value_name"`
 	Index		int    `json:"index"`
 }
@@ -78,6 +82,7 @@ type SensorValue struct {
 type Node struct {
 	ID				int				`json:"id"`
 	Name			string			`json:"name"`
+	Type			string			`json:"type"`
 	LocLat			float64			`json:"lat"`
 	LocLon			float64			`json:"lng"`
 	LocAlt			float64			`json:"alt"`
@@ -94,6 +99,7 @@ func NodeToModel(n *Node, sn string) (model.Node, []Logic) {
 	}
 	return model.Node{
 		Name: n.Name,
+		Type: n.Type,
 		Location: model.Location{
 			Lat: n.LocLat,
 			Lon: n.LocLon,
@@ -136,5 +142,37 @@ type Delivery struct {
 	DestPhone	  string	`json:"dest_phone"`
 	DestStationID int		`json:"dest_station_id"`
 	
-	// CreatedAt	  time.Time `json:"created_at"`
+	CreatedAt	  time.Time `json:"created_at"`
+}
+
+func DeliveryToModel(d *Delivery) (model.Delivery) {
+	return model.Delivery{
+		Did:		   d.ID,
+		OrderNum:	   d.OrderNum,
+		SrcName:	   d.SrcName,
+		SrcPhone:	   d.SrcPhone,
+		SrcStationID:  d.SrcStationID,
+		DestName:	   d.DestName,
+		DestPhone:     d.DestPhone,
+		DestTagID: 	   d.DestStationID,
+	}
+}
+
+type Path struct {
+	StationID int	  `json:"station_id"`
+	TagID 	  int	  `json:"tag_id"`
+	Path   	  string  `json:"path"`
+	Distance  float64 `json:"distance"`
+}
+
+func PathToModel(station *model.Node, tag *model.Node) (model.Path) {
+	powLon := math.Pow((station.Location.Lon - tag.Location.Lon), 2)
+	powLat := math.Pow((station.Location.Lat - tag.Location.Lat), 2)
+	dist := math.Pow((powLon + powLat), 0.5)
+	return model.Path{
+		StationID: station.Nid,
+		TagID:	   tag.Nid,
+		Path:	   "",
+		Distance:  dist,
+	}
 }

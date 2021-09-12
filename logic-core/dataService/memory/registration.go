@@ -20,10 +20,6 @@ func NewRegistRepo() (*registRepo, map[int]model.Sink) {
 			nmu:   &sync.RWMutex{},
 			ninfo: make(map[int]model.Node),
 		},
-		// sensorRepo{
-		// 	smu:   &sync.RWMutex{},
-		// 	sinfo: make(map[int]model.Sensor),
-		// },
 		sinkAddrRepo{
 			samu:  &sync.RWMutex{},
 			addrs: make(map[int]model.Sink),
@@ -32,6 +28,14 @@ func NewRegistRepo() (*registRepo, map[int]model.Sink) {
 			nmu:   &sync.RWMutex{},
 			ninfo: make(map[int]model.Nodeinfo),
 		},
+		pathRepo{
+			pmu:   &sync.RWMutex{},
+			pinfo: make(map[int]model.Path),
+		},
+		deliveryRepo{
+			dmu:   &sync.RWMutex{},
+			dinfo: make(map[int]model.Delivery),
+		},
 	}
 
 	return regist, regist.addrs
@@ -39,10 +43,15 @@ func NewRegistRepo() (*registRepo, map[int]model.Sink) {
 
 type registRepo struct {
 	nodeRepo
-	// sensorRepo
 	sinkAddrRepo
 	nodeInfoRepo // not used
+	pathRepo
+	deliveryRepo
 }
+
+var (
+	Pid int = 0
+)
 
 /**************************************************************/
 /* Node Repo                                                  */
@@ -62,6 +71,23 @@ func (nr *nodeRepo) FindNode(key int) (*model.Node, error) {
 		return nil, errors.New("nodeRepo: cannot find node")
 	}
 	return &n, nil
+}
+
+func (nr *nodeRepo) FindNodesBySinkID(sid int) ([]model.Node, error) {
+	nr.nmu.RLock()
+	defer nr.nmu.RUnlock()
+
+	if len(nr.ninfo) == 0 {
+		return nil, errors.New("nodeRepo: cannot find node")
+	}
+
+	res := []model.Node{}
+	for _, node := range(nr.ninfo) {
+		if node.Sid == sid {
+			res = append(res, node)
+		}
+	}
+	return res, nil
 }
 
 func (nr *nodeRepo) CreateNode(key int, n *model.Node) error {
@@ -143,38 +169,100 @@ func (sar *sinkAddrRepo) AppendSinkAddr(sid int, s *string) error {
 }
 
 /**************************************************************/
-/* Sensor Repo                                                */
+/* Path Repo                                                  */
 /**************************************************************/
-// type sensorRepo struct {
-// 	smu   *sync.RWMutex
-// 	sinfo map[int]model.Sensor
-// }
+type pathRepo struct {
+	pmu   *sync.RWMutex
+	pinfo map[int]model.Path
+}
 
-// func (sr *sensorRepo) FindSensor(key int) (*model.Sensor, error) {
-// 	sr.smu.RLock()
-// 	defer sr.smu.RUnlock()
+func (pr *pathRepo) FindPath(key int) (*model.Path, error) {
+	pr.pmu.RLock()
+	defer pr.pmu.RUnlock()
 
-// 	s, ok := sr.sinfo[key]
-// 	if !ok {
-// 		return nil, errors.New("nodeRepo: cannot find sensor")
-// 	}
-// 	return &s, nil
-// }
+	p, ok := pr.pinfo[key]
+	if !ok {
+		return nil, errors.New("pathRepo: cannot find path")
+	}
+	return &p, nil
+}
 
-// func (sr *sensorRepo) CreateSensor(key int, s *model.Sensor) error {
-// 	_, ok := sr.sinfo[key]
-// 	if ok {
-// 		return errors.New("nodeRepo: already exist sensor")
-// 	}
-// 	sr.sinfo[key] = *s
-// 	return nil
-// }
+func (pr *pathRepo) FindShortestPathStation(tagid int) (station *model.Node, err error) {
+	pr.pmu.RLock()
+	defer pr.pmu.RUnlock()
 
-// func (sr *sensorRepo) DeleteSensor(key int) error {
-// 	_, ok := sr.sinfo[key]
-// 	if !ok {
-// 		return errors.New("nodeRepo: cannot find sensor")
-// 	}
-// 	delete(sr.sinfo, key)
-// 	return nil
-// }
+	if len(pr.pinfo) == 0 {
+		return nil, errors.New("pathRepo: no path")
+	}
+
+	min := pr.pinfo[0].Distance
+	nid := 0
+	for _, path := range(pr.pinfo) {
+		if (path.Distance < min) {
+			min = path.Distance
+			nid = path.StationID
+		}
+	}
+	res, err := regist.FindNode(nid)
+	if err != nil {
+		return nil, errors.New("pathRepo: cannot find node")
+	}
+
+	return res, nil
+}
+
+func (pr *pathRepo) CreatePath(p *model.Path) (int, error) {
+	_, ok := pr.pinfo[Pid]
+	if ok {
+		return -1, errors.New("pathRepo: already exist path")
+	}
+	Pid += 1
+	pr.pinfo[Pid] = *p
+	return Pid, nil
+}
+
+func (pr *pathRepo) DeletePath(key int) error {
+	_, ok := pr.pinfo[key]
+	if !ok {
+		return errors.New("pathRepo: cannot find path")
+	}
+	delete(pr.pinfo, key)
+	return nil
+}
+
+/**************************************************************/
+/* Delivery Repo                                              */
+/**************************************************************/
+type deliveryRepo struct {
+	dmu   *sync.RWMutex
+	dinfo map[int]model.Delivery
+}
+
+func (dr *deliveryRepo) FindDelivery(key int) (*model.Delivery, error) {
+	dr.dmu.RLock()
+	defer dr.dmu.RUnlock()
+
+	d, ok := dr.dinfo[key]
+	if !ok {
+		return nil, errors.New("deliveryRepo: cannot find path")
+	}
+	return &d, nil
+}
+
+func (dr *deliveryRepo) CreateDelivery(key int, d *model.Delivery) error {
+	_, ok := dr.dinfo[key]
+	if ok {
+		return errors.New("deliveryRepo: already exist node")
+	}
+	dr.dinfo[key] = *d
+	return nil
+}
+
+func (dr *deliveryRepo) DeleteDelivery(key int) error {
+	_, ok := dr.dinfo[key]
+	if !ok {
+		return errors.New("deliveryRepo: cannot find path")
+	}
+	delete(dr.dinfo, key)
+	return nil
+}
