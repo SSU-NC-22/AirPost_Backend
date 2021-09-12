@@ -45,7 +45,6 @@ func (lsr *logicServiceRepo) Create(l *model.LogicService) error {
 		}
 		return nil
 	})
-	// return lsr.db.Omit(clause.Associations).Create(l).Error
 }
 
 func (lsr *logicServiceRepo) Delete(l *model.LogicService) error {

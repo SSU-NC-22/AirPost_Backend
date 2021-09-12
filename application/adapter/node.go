@@ -13,7 +13,6 @@ type Node struct {
 	Sink     		model.Sink     		`json:"sink"`
 	SensorValues	[]model.SensorValue	`json:"sensor_values"`
 	Logics			[]model.Logic		`json:"logics"`
-	// Sensors  		[]model.Sensor 		`json:"sensors"`
 }
 
 type Location struct {
@@ -62,11 +61,6 @@ type NodePage struct {
 	Nodes []model.Node `json:"nodes"`
 	Pages int          `json:"pages"`
 }
-
-// type SensorPage struct {
-// 	Sensors []model.Sensor `json:"sensors"`
-// 	Pages   int            `json:"pages"`
-// }
 
 type SinkAddr struct {
 	Sid  int    `json:"sid"`

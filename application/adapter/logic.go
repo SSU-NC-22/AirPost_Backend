@@ -15,8 +15,6 @@ type Logic struct {
 	Elems     	[]Element    	`json:"elems"` // 엘렘 배열 , value time email 중 선택한거 드가있음
 	NodeID		int				`json:"node_id"`
 	Node		model.Node		`json:"node"`
-	// SensorID  	int          	`json:"sensor_id"`
-	// Sensor    	model.Sensor 	`json:"sensor"`
 }
 
 /*
@@ -42,8 +40,6 @@ func LogicToAdapter(ml *model.Logic) (Logic, error) {
 			Elems:     	elems,
 			NodeID:		ml.NodeID,
 			Node:    	ml.Node,
-			// SensorID:  	ml.SensorID,
-			// Sensor:    	ml.Sensor,
 		}, nil
 	}
 }
@@ -67,7 +63,6 @@ func LogicToModel(l *Logic) (model.Logic, error) {
 			Name:     	l.LogicName,
 			Elems:    	string(b),
 			NodeID:		l.NodeID,
-			// SensorID: 	l.SensorID,
 		}, nil
 	}
 }

@@ -32,15 +32,6 @@ func (acr *actuatorRepo) FindsPage(p adapter.Page) (al []model.Actuator, err err
 	return al, acr.db.Offset(offset).Limit(p.Size).Find(&al).Error
 }
 
-// func (sir *sinkRepo) FindsByTopicIDWithNodesSensorsValuesLogics(tid int) (sl []model.Sink, err error) {
-// 	return sl, sir.db.Where("topic_id=?", tid).Preload("Nodes.Sensors.Logics").Preload("Nodes.Sensors.SensorValues", orderByASC).Preload("Nodes.Sensors").Preload("Nodes").Find(&sl).Error
-// }
-
-// func (sir *sinkRepo) FindByIDWithNodesSensorsValuesTopic(id int) (*model.Sink, error) {
-// 	s := &model.Sink{}
-// 	return s, sir.db.Where("id=?", id).Preload("Nodes.Sensors.SensorValues", orderByASC).Preload("Nodes.Sensors").Preload("Nodes").Preload("Topic").Find(s).Error
-// }
-
 func (acr *actuatorRepo) Create(a *model.Actuator) error {
 	return acr.db.Omit(clause.Associations).Create(a).Error
 }

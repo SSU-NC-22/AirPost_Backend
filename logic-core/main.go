@@ -11,8 +11,6 @@ import (
 	"syscall"
 	"time"
 
-	
-	"github.com/eunnseo/AirPost/logic-core/usecase"
 	"github.com/eunnseo/AirPost/logic-core/adapter"
 	"github.com/eunnseo/AirPost/logic-core/dataService/memory"
 	"github.com/eunnseo/AirPost/logic-core/elasticClient"
@@ -20,6 +18,7 @@ import (
 	"github.com/eunnseo/AirPost/logic-core/logicService"
 	"github.com/eunnseo/AirPost/logic-core/rest/handler"
 	"github.com/eunnseo/AirPost/logic-core/setting"
+	"github.com/eunnseo/AirPost/logic-core/usecase"
 	"github.com/eunnseo/AirPost/logic-core/usecase/eventUC"
 	"github.com/eunnseo/AirPost/logic-core/usecase/logicCoreUC"
 	"github.com/gin-gonic/gin"
@@ -76,7 +75,6 @@ func SetEventRoute(r *gin.Engine, h *handler.Handler) {
 		e.POST("/sink/delete", h.DeleteSink)
 		e.POST("/node/create", h.CreateNode)
 		e.POST("/node/delete", h.DeleteNode)
-		// e.POST("/sensor/delete", h.DeleteSensor)
 		e.POST("/logic/create", h.CreateLogic)
 		e.POST("/logic/delete", h.DeleteLogic)
 		e.POST("/delivery/create", h.CreateDelivery)
