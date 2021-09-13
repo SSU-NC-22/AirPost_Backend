@@ -25,5 +25,5 @@ func (sdr *stationDroneRepo) Create(sd *model.StationDrone) error {
 }
 
 func (sdr *stationDroneRepo) Delete(sd *model.StationDrone) error {
-	return sdr.db.Delete(sd).Error
+	return sdr.db.Where("station_id=?", sd.StationID).Delete(sd).Error
 }

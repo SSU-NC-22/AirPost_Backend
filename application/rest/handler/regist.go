@@ -710,8 +710,13 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	}
 
 	// DestStation에 연결할 drone regist
+	destStation, err := h.ru.GetShortestPathStation(delivery.DestStationID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	sd = model.StationDrone{
-		StationID: delivery.DestStationID,
+		StationID: destStation.ID,
 		DroneID:   droneid,
 	}
 	err = h.ru.RegistStationDrone(&sd)
@@ -720,7 +725,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		return
 	}
 
-	h.eu.CreateDeliveryEvent(&delivery)
+	go h.eu.CreateDeliveryEvent(&delivery)
 	c.JSON(http.StatusOK, delivery)
 	log.Println("===== handler RegistDelivery func fin =====")
 }

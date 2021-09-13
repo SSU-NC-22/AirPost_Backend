@@ -62,6 +62,7 @@ type DeliveryRepo interface {
 }
 
 type PathRepo interface {
+	Finds() (pl []model.Path, err error)
 	Create(*model.Path) error
 	Delete(*model.Path) error
 }

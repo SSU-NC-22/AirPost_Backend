@@ -16,6 +16,10 @@ func NewPathRepo() *pathRepo {
 	}
 }
 
+func (ptr *pathRepo) Finds() (pl []model.Path, err error) {
+	return pl, ptr.db.Find(&pl).Error
+}
+
 func (ptr *pathRepo) Create(p *model.Path) error {
 	return ptr.db.Omit(clause.Associations).Create(p).Error
 }

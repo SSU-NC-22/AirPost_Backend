@@ -45,6 +45,8 @@ type RegistUsecase interface {
 	RegistDelivery(d *model.Delivery) error
 	UnregistDelivery(d *model.Delivery) error
 
+	GetShortestPathStation(tagid int) (station *model.Node, err error)
+	GetPaths() ([]model.Path, error)
 	RegistPath(p *model.Path) error
 	UnregistPath(p *model.Path) error
 
