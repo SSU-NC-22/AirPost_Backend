@@ -66,8 +66,7 @@ type EventUsecase interface {
 	DeleteNodeEvent(n *model.Node) error
 	CreateLogicEvent(l *model.Logic) error
 	DeleteLogicEvent(l *model.Logic) error
+	CreateDeliveryEvent(d *model.Delivery) error
 
 	PostToSink(sid int) error
-
-	CreateDeliveryEvent(d *model.Delivery) error
 }

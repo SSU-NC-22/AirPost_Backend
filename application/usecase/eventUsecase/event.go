@@ -120,7 +120,8 @@ func (eu *eventUsecase) CreateDeliveryEvent(d *model.Delivery) error {
 	log.Println("\t===== event CreateDeliveryEvent start =====")
 	e := CreateDelivery
 
-	ll, err := eu.lsr.FindsByTopicID(d.Drone.Sink.Topic.ID)
+	s, _ := eu.sir.FindByIDWithNodesSensorsValuesTopic(d.Drone.SinkID)
+	ll, err := eu.lsr.FindsByTopicID(s.Topic.ID)
 	if err != nil {
 		return err
 	}
