@@ -34,7 +34,6 @@ func (ee *EmailElement) Exec(d *model.LogicData) {
 		ee.Interval[d.Node.Name] = true
 	}
 	if ok {
-		log.Println("\t\tin EmailElement.Exec, ok")
 		ee.Interval[d.Node.Name] = false
 
 		body := fmt.Sprintf(bodyFmt, d.Node.Name)
@@ -55,7 +54,6 @@ func (ee *EmailElement) Exec(d *model.LogicData) {
 			ee.Interval[d.Node.Name] = true
 		}()
 	}
-	log.Println("\t\tin EmailElement.Exec, before BaseElement.Exec(d)")
 	ee.BaseElement.Exec(d)
 }
 
@@ -80,28 +78,26 @@ type Actuator struct {
 }
 
 func (ae *ActuatorElement) Exec(d *model.LogicData) {
-	log.Println("\t\t!!!!in ActuatorElement.Exec !!!!")
+	log.Println("!!!!in ActuatorElement.Exec !!!!")
 	ok, exist := ae.Interval[d.Node.Name]
 	if !exist {
 		ae.Interval[d.Node.Name] = true
 	}
 	if ok {
-		log.Println("\t\tin ActuatorElement.Exec, ok")
 		ae.Interval[d.Node.Name] = false
 		go func() {
-			log.Println("\t\tin ActuatorElement.Exec, go routine 1")
 			
 			res := Actuator{
 				Nid:    d.Node.Nid,
 				Aid:    ae.Aid,
 				Values: ae.Values,
 			}
-			log.Println("\t\tin ActuatorElement.Exec, res = ", res)
+			log.Println("in ActuatorElement.Exec, res = ", res)
 					
 			pbytes, _ := json.Marshal(res)
 			buff := bytes.NewBuffer(pbytes)
 			addr := (*adapter.AddrMap)[d.Node.Sid] // sink address
-			log.Println("in Act.Exec, 받는 주소: " + "http://" + addr.Addr + "/actuator" + "전달내용: " + string(pbytes))
+			log.Println("in Act.Exec, 받는 주소: " + "http://" + addr.Addr + "/actuator" + " 전달내용: " + string(pbytes))
 			resp, err := http.Post("http://"+addr.Addr+"/actuator", "application/json", buff)
 			if err != nil {
 				panic(err)
@@ -113,10 +109,69 @@ func (ae *ActuatorElement) Exec(d *model.LogicData) {
 		go func() {
 			<-tick.C
 			ae.Interval[d.Node.Name] = true
-			log.Println("\t\tin ActuatorElement.Exec, go routine 2")
 		}()
 	}
-	log.Println("\t\tin ActuatorElement.Exec, before BaseElement.Exec(d)")
 	ae.BaseElement.Exec(d)
 }
 
+type Drone struct {
+	DroneID int `json:"drone_id"`
+	Values struct {
+		WP0 [][]float64 `json:"wp0"` // weigh point 0 (start station -> dest tag path)
+		WP1 [][]float64 `json:"wp1"` // weigh point 1 (dest tag -> nearby station path)
+	} `json:"values"`
+}
+
+type DroneElement struct {
+	BaseElement
+	DroneID int `json:"drone_id"`
+	Value struct {
+		WP0 [][]float64 `json:"wp0"`
+		WP1 [][]float64 `json:"wp1"`
+	} `json:"value"`
+	Interval map[string]bool
+}
+
+func (de *DroneElement) Exec(d *model.LogicData) {
+	log.Println("\t\t!!!!in DroneElement.Exec !!!!")
+	ok, exist := de.Interval[d.Node.Name]
+	if !exist {
+		de.Interval[d.Node.Name] = true
+	}
+	if ok {
+		de.Interval[d.Node.Name] = false
+			
+		res := Drone{
+			DroneID: 1,
+			Values: struct{WP0 [][]float64 "json:\"wp0\""; WP1 [][]float64 "json:\"wp1\""}{},
+		}
+
+		srcStation := []float64{37.497365670723944, 126.95591909983503} // 위도(lat), 경도(lon)
+		tag := []float64{37.49719755738831, 126.95590032437323}
+		destStation := []float64{37.4971933013496, 126.95619804955307}
+
+		res.Values.WP0 = append(res.Values.WP0, srcStation)
+		res.Values.WP0 = append(res.Values.WP0, tag)
+		res.Values.WP1 = append(res.Values.WP1, tag)
+		res.Values.WP1 = append(res.Values.WP1, destStation)
+
+		log.Println("\t\tin DroneElement.Exec, res = ", res)
+				
+		pbytes, _ := json.Marshal(res)
+		buff := bytes.NewBuffer(pbytes)
+		addr := (*adapter.AddrMap)[d.Node.Sid]
+		log.Println("in Drone.Exec, 받는 주소: " + "http://" + addr.Addr + "/drone" + " 전달내용: " + string(pbytes))
+		resp, err := http.Post("http://"+addr.Addr+"/drone", "application/json", buff)
+		if err != nil {
+			panic(err)
+		}
+		resp.Body.Close()
+
+		tick := time.NewTicker(10 * time.Second)
+		go func() {
+			<-tick.C
+			de.Interval[d.Node.Name] = true
+		}()
+	}
+	de.BaseElement.Exec(d)
+}
