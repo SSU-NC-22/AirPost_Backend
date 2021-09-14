@@ -187,36 +187,31 @@ func (pr *pathRepo) FindPath(key int) (*model.Path, error) {
 	return &p, nil
 }
 
-func (pr *pathRepo) FindShortestPathStation(tagid int) (station *model.Node, err error) {
+func (pr *pathRepo) FindShortestPathStationID(tagid int) (stationid int, err error) {
 	pr.pmu.RLock()
 	defer pr.pmu.RUnlock()
 
 	if len(pr.pinfo) == 0 {
-		return nil, errors.New("pathRepo: no path")
+		return -1, errors.New("pathRepo: no path")
 	}
 
-	min := pr.pinfo[0].Distance
-	nid := 0
+	min := pr.pinfo[1].Distance
+	stationid = 1
 	for _, path := range(pr.pinfo) {
 		if (path.Distance < min) {
 			min = path.Distance
-			nid = path.StationID
+			stationid = path.StationID
 		}
 	}
-	res, err := regist.FindNode(nid)
-	if err != nil {
-		return nil, errors.New("pathRepo: cannot find node")
-	}
-
-	return res, nil
+	return stationid, nil
 }
 
 func (pr *pathRepo) CreatePath(p *model.Path) (int, error) {
+	Pid += 1
 	_, ok := pr.pinfo[Pid]
 	if ok {
 		return -1, errors.New("pathRepo: already exist path")
 	}
-	Pid += 1
 	pr.pinfo[Pid] = *p
 	return Pid, nil
 }

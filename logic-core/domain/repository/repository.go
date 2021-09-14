@@ -15,7 +15,7 @@ type RegistRepo interface {
 	FindPath(key int) (*model.Path, error)
 	CreatePath(p *model.Path) (int, error)
 	DeletePath(key int) error
-	FindShortestPathStation(tagid int) (station *model.Node, err error)
+	FindShortestPathStationID(tagid int) (stationid int, err error)
 
 	FindDelivery(key int) (*model.Delivery, error)
 	CreateDelivery(key int, d *model.Delivery) error
