@@ -127,7 +127,6 @@ func (h *Handler) DeleteLogic(c *gin.Context) {
 /**************************************************************/
 func (h *Handler) CreateDelivery(c *gin.Context) {
 	var ad adapter.Delivery
-
 	if err := c.ShouldBindJSON(&ad); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -137,5 +136,11 @@ func (h *Handler) CreateDelivery(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	if err := h.evuc.CreateDeliveryLogic(&ad); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	c.JSON(http.StatusOK, ad)
 }

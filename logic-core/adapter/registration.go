@@ -2,7 +2,6 @@ package adapter
 
 import (
 	"encoding/json"
-	"log"
 	"math"
 	"time"
 
@@ -41,6 +40,10 @@ import (
 // adapter : Logic (Logic.Sensor X)
 // action : delete Logic
 
+var (
+	Lid int = 0
+)
+
 type Logic struct {
 	ID		int    `json:"id"`
 	Name	string `json:"name"`
@@ -49,11 +52,14 @@ type Logic struct {
 }
 
 func LogicToModel(l *Logic) (model.Logic, error) {
-	log.Println("LogicToModel")
 	var elems []model.Element
 	if err := json.Unmarshal([]byte(l.Elems), &elems); err != nil {
 		return model.Logic{}, err
 	} else {
+		Lid += 1
+		if l.ID == 0 {
+			l.ID = Lid
+		}
 		return model.Logic{
 			ID:        l.ID,
 			LogicName: l.Name,

@@ -7,10 +7,14 @@ import (
 type EventUsecase interface {
 	CreateSink(s *adapter.Sink) error
 	DeleteSink(nl []adapter.Node) error
+	
 	CreateNode(n *adapter.Node, sn string) error
 	DeleteNode(n *adapter.Node) error
+
 	CreateLogic(l *adapter.Logic) error
 	DeleteLogic(l *adapter.Logic) error
+
+	CreateDeliveryLogic(d *adapter.Delivery) error
 	CreateDelivery(d *adapter.Delivery) error
 }
 

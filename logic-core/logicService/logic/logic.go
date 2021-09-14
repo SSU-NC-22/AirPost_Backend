@@ -18,13 +18,10 @@ type BaseElement struct {
 }
 
 func (e *BaseElement) SetNext(next Elementer) {
-	log.Println("===== logic BaseElement.SetNext start =====")
 	e.next = next
 }
 
 func (e *BaseElement) Exec(d *model.LogicData) {
-
-	log.Println("\t===== logic BaseElement.Exec start =====")
 	if e.next != nil {
 		log.Println("\t!!!!in BaseElement.Exec !!!!")
 		e.next.Exec(d)
@@ -61,14 +58,12 @@ func BuildLogic(l *model.Logic) (Elementer, error) {
 }
 
 func UnmarshalElement(e *model.Element) (Elementer, error) {
-	log.Println("===== logic UnmarshalElement start =====")
 	elem := GetElementer(e.Elem)
-	log.Println("in UnmarshalElement, e(Element) = ", e)
-	log.Println("in UnmarshalElement, elem1212= ", e.Elem)
-	log.Println("in UnmarshalElement, elem1212= ", elem)
+	log.Println("in UnmarshalElement, e(model.Element) = ", e)
+	log.Println("in UnmarshalElement, e.Elem = ", e.Elem)
+	log.Println("in UnmarshalElement, elem = ", elem)
 
 	if elem == nil {
-		log.Println("in UnmarshalElement err elem")
 		return nil, fmt.Errorf("invalid Element : %s", e.Elem)
 	}
 
@@ -97,6 +92,8 @@ func GetElementer(elem string) Elementer {
 		return &EmailElement{Interval: make(map[string]bool)}
 	case "actuator":
 		return &ActuatorElement{Interval: make(map[string]bool)}
+	case "drone":
+		return &DroneElement{Interval: make(map[string]bool)}
 	default:
 		return nil
 	}
