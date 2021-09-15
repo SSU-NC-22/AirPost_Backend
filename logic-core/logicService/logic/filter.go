@@ -63,4 +63,18 @@ func (te *TimeElement) Exec(d *model.LogicData) {
 	}
 }
 
+/*
+type LocElement struct { // 도착 알림을 위한 filter
+	BaseElement
+	Value string `json:"value"`
+	Range []struct {
+		Start string `json:"start"`
+		End   string `json:"end"`
+	} `json:"range"`
+}
 
+func (le *LocElement) Exec(d *model.LogicData) {
+	
+	log.Println("!!!!in ValueElement.Exec !!!!")
+}
+*/
