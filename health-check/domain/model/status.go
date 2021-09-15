@@ -2,6 +2,8 @@ package model
 
 import (
 	"time"
+
+	// "github.com/eunnseo/AirPost/health-check/setting"
 )
 
 const (
@@ -16,9 +18,10 @@ type SinkStatus struct {
 }
 
 type NodeStatus struct {
-	NodeID  int `json:"nid"`
-	State   int `json:"state"`
-	Battery int `json:"battery"`
+	NodeID   int       `json:"nid"`
+	State    int       `json:"state"`
+	Battery  int       `json:"battery"`
+	Location []float64 `json:"location"`
 }
 
 type Status struct {
@@ -75,5 +78,5 @@ func (s *Status) CheckDrop() bool {
 	s.setState(RED)
 	now := time.Now()
 	timeout := time.Now() //s.LastConnect.Add(time.Duration(setting.StatusSetting.Drop) * time.Hour)
-	return now.After(timeout)
+	return now.After(timeout) // TODO
 }

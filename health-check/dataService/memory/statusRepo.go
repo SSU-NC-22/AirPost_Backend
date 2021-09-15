@@ -27,7 +27,7 @@ func NewStatusRepo() *statusRepo {
 
 	statusTable := &statusRepo{
 		mu:    &sync.RWMutex{},
-		table: map[int]map[int]model.Status{},
+		table: map[int]map[int]model.Status{}, // [SinkID][NodeID]의 model.Status 저장
 	}
 	return statusTable
 }
@@ -49,7 +49,7 @@ func (sr *statusRepo) UpdateTable(states adapter.States) []model.NodeStatus { //
 	sr.mu.Lock()
 	defer sr.mu.Unlock()
 
-	if _, ok := sr.table[states.State.SinkID]; !ok {
+	if _, ok := sr.table[states.State.SinkID]; !ok { // if new SinkID
 		sr.table[states.State.SinkID] = map[int]model.Status{}
 	}
 	return sr.updateNodeStatus(states.State.SinkID, states.State.State, t)
@@ -57,21 +57,22 @@ func (sr *statusRepo) UpdateTable(states adapter.States) []model.NodeStatus { //
 
 func (sr *statusRepo) updateNodeStatus(sinkID int, ns []adapter.NodeState, t time.Time) []model.NodeStatus { // 어답더 계층의 NodeState상태와 메모리 계층의 statusRepo의 status table을 동기화시켜 주는 것
 	res := []model.NodeStatus{}
-	nsTable := map[int]bool{}
+	nsTable := map[int]bool{} // NodeState 존재 여부
 
 	// update the status checked from the sink node
-	for _, v := range ns { // v는 NodeSate 배열 중 한 원소
+	// 상태가 바뀐 NodeStatus에 대한 정보만 res에 추가
+	for _, v := range ns { // v는 NodeState 배열 중 한 원소
 		nsTable[v.NodeID] = true
 		nodeState, ok := sr.table[sinkID][v.NodeID]
 		
 		if !ok { // if new nodeState, regist new state
 			tempState := model.NewStatus(v.State, t)
 			sr.table[sinkID][v.NodeID] = tempState
-			res = append(res, model.NodeStatus{NodeID: v.NodeID, State: tempState.State, Battery: v.Battery})
+			res = append(res, model.NodeStatus{NodeID: v.NodeID, State: tempState.State, Battery: v.Battery, Location: v.Location})
 			continue
 		}
 		if isChanged := nodeState.UpdateState(v.State, t); isChanged {
-			res = append(res, model.NodeStatus{NodeID: v.NodeID, State: nodeState.State, Battery: v.Battery})
+			res = append(res, model.NodeStatus{NodeID: v.NodeID, State: nodeState.State, Battery: v.Battery, Location: v.Location})
 		}
 		sr.table[sinkID][v.NodeID] = nodeState
 	}

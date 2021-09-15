@@ -55,7 +55,7 @@ func main() {
 			}
 		}()
 
-		for data := range listen {
+		for data := range listen { // data type: model.NodeStatus
 			log.Printf("read %v\n", data)
 			err := conn.WriteJSON(data)
 			if err != nil {
