@@ -115,62 +115,41 @@ func (ae *ActuatorElement) Exec(d *model.LogicData) {
 }
 
 type Drone struct {
-	DroneID int `json:"drone_id"`
-	Values struct {
-		WP0 [][]float64 `json:"wp0"` // weigh point 0 (start station -> dest tag path)
-		WP1 [][]float64 `json:"wp1"` // weigh point 1 (dest tag -> nearby station path)
-	} `json:"values"`
+	Nid    string 	   `json:"nid"` // drone node id
+	Values [][]float64 `json:"values"`
+	Tagidx int 		   `json:"tagidx"` // values 내에서 tag가 몇번째 index인지 (0~)
 }
 
 type DroneElement struct {
 	BaseElement
-	DroneID int `json:"drone_id"`
-	Value struct {
-		WP0 [][]float64 `json:"wp0"`
-		WP1 [][]float64 `json:"wp1"`
-	} `json:"value"`
-	Interval map[string]bool
+	Nid      string 	 `json:"nid"`
+	Values   [][]float64 `json:"values"`
+	Tagidx   int 		 `json:"tagidx"`
+	Sent	 bool		 `json:"sent"`
 }
 
 func (de *DroneElement) Exec(d *model.LogicData) {
 	log.Println("\t\t!!!!in DroneElement.Exec !!!!")
-	ok, exist := de.Interval[d.Node.Name]
-	if !exist {
-		de.Interval[d.Node.Name] = true
-	}
-	if ok {
-		de.Interval[d.Node.Name] = false
 			
-		res := Drone{
-			DroneID: 1,
-			Values: struct{WP0 [][]float64 "json:\"wp0\""; WP1 [][]float64 "json:\"wp1\""}{},
-		}
-
-		srcStation := []float64{37.497365670723944, 126.95591909983503} // 위도(lat), 경도(lon)
-		tag := []float64{37.49719755738831, 126.95590032437323}
-		destStation := []float64{37.4971933013496, 126.95619804955307}
-
-		res.Values.WP0 = append(res.Values.WP0, srcStation)
-		res.Values.WP0 = append(res.Values.WP0, tag)
-		res.Values.WP1 = append(res.Values.WP1, tag)
-		res.Values.WP1 = append(res.Values.WP1, destStation)
-
-		log.Println("\t\tin DroneElement.Exec, res = ", res)
-				
-		pbytes, _ := json.Marshal(res)
-		buff := bytes.NewBuffer(pbytes)
-		addr := (*adapter.AddrMap)[d.Node.Sid]
-		log.Println("in Drone.Exec, 받는 주소: " + "http://" + addr.Addr + "/drone" + " 전달내용: " + string(pbytes))
-		resp, err := http.Post("http://"+addr.Addr+"/drone", "application/json", buff)
-		if err != nil {
-			panic(err)
-		}
-		resp.Body.Close()
-
-		tick := time.NewTicker(10 * time.Second)
+	if !de.Sent {
+		de.Sent = true
 		go func() {
-			<-tick.C
-			de.Interval[d.Node.Name] = true
+			res := Drone{
+				Nid:    de.Nid,
+				Values: de.Values,
+				Tagidx: de.Tagidx,
+			}
+			log.Println("\t\tin DroneElement.Exec, res = ", res)
+					
+			pbytes, _ := json.Marshal(res)
+			buff := bytes.NewBuffer(pbytes)
+			addr := (*adapter.AddrMap)[d.Node.Sid]
+			log.Println("in Drone.Exec, 받는 주소: " + "http://" + addr.Addr + "/drone" + " 전달내용: " + string(pbytes))
+			resp, err := http.Post("http://"+addr.Addr+"/drone", "application/json", buff)
+			if err != nil {
+				panic(err)
+			}
+			defer resp.Body.Close()
 		}()
 	}
 	de.BaseElement.Exec(d)

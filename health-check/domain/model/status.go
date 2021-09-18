@@ -2,7 +2,6 @@ package model
 
 import (
 	"time"
-
 	// "github.com/eunnseo/AirPost/health-check/setting"
 )
 
@@ -21,7 +20,7 @@ type NodeStatus struct {
 	NodeID   int       `json:"nid"`
 	State    int       `json:"state"`
 	Battery  int       `json:"battery"`
-	Location []float64 `json:"location"`
+	Location []float64 `json:"location"` // [lat, lon, alt]
 }
 
 type Status struct {

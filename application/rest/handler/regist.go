@@ -682,7 +682,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	}
 	log.Println("droneid = ", droneid)
 
-	// Regist Delivery with DroneID and Drone
+	// Regist Delivery with DroneID and Drone - 필요한가?
 	drone, err := h.ru.GetNodeByID(droneid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -724,6 +724,78 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	/* 드론에게 path 전달하는 logic 생성 및 실행 */
+	// TODO
+	srcStationLoc := []float64{37.497365670723944, 126.95591909983503} // 위도(lat), 경도(lon)
+	tagLoc := []float64{37.49719755738831, 126.95590032437323}
+	destStationLoc := []float64{37.4971933013496, 126.95619804955307}
+
+	path := [][]float64{}
+	path = append(path, srcStationLoc)
+	path = append(path, tagLoc)
+	path = append(path, destStationLoc)
+
+	aPathLogicElement := adapter.Element{
+		Elem: "drone",
+		Arg:  map[string]interface{} {
+			"nid":    "DRO" + strconv.Itoa(delivery.DroneID),
+			"values": path,
+			"tagidx": 1, // TODO
+		},
+	}
+	aPathLogic := adapter.Logic{
+		LogicName: "drone",
+		Elems: []adapter.Element{aPathLogicElement},
+		NodeID: delivery.DroneID,
+		Node: delivery.Drone,
+	}
+	log.Println("aPathLogic = ", aPathLogic)
+
+	pathLogic, err := adapter.LogicToModel(&aPathLogic)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	// err = h.ru.RegistLogic(&pathLogic)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
+	h.eu.CreateLogicEvent(&pathLogic)
+
+	/* 도착 알람을 위한 logic 생성 및 실행 */
+	e1 := adapter.Element{
+		Elem: "arrival",
+		Arg: map[string]interface{}{
+			"done": 1,
+		},
+	}
+	e2 := adapter.Element{
+		Elem: "email",
+		Arg: map[string]interface{}{
+			// "text": delivery.Email,
+			"text": "eunseo@q.ssu.ac.kr",
+		},
+	}
+	aAlarmLogic := adapter.Logic{
+		LogicName: delivery.OrderNum,
+		Elems: []adapter.Element{e1, e2},
+		NodeID: delivery.DroneID,
+	}
+	log.Println("aAlarmLogic = ", aAlarmLogic)
+
+	alarmLogic, err := adapter.LogicToModel(&aAlarmLogic)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	// err = h.ru.RegistLogic(&alarmLogic)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
+	h.eu.CreateLogicEvent(&alarmLogic)
 
 	go h.eu.CreateDeliveryEvent(&delivery)
 	c.JSON(http.StatusOK, delivery)
@@ -779,6 +851,7 @@ func (h *Handler) GetTracking(c *gin.Context) {
 	}
 
 	tracking := model.Tracking{
+		DroneNid: delivery.DroneID,
 		SrcLat:   src.LocLat,
 		SrcLng:	  src.LocLon,
 		DestLat:  dest.LocLat,

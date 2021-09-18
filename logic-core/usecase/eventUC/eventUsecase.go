@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/eunnseo/AirPost/logic-core/adapter"
-	"github.com/eunnseo/AirPost/logic-core/domain/model"
 	"github.com/eunnseo/AirPost/logic-core/domain/repository"
 	"github.com/eunnseo/AirPost/logic-core/domain/service"
 )
@@ -100,6 +99,7 @@ func (eu *eventUsecase) CreateLogic(l *adapter.Logic) error {
 		return err
 	} else {
 		log.Println("in eu.CreateLogic.good")
+		log.Println("model.Logic : ", ml)
 		return eu.ls.CreateAndStartLogic(&ml)
 	}
 }
@@ -108,20 +108,10 @@ func (eu *eventUsecase) DeleteLogic(l *adapter.Logic) error {
 	return eu.ls.RemoveLogic(l.NodeID, l.ID)
 }
 
+/*
 func (eu *eventUsecase) CreateDeliveryLogic(d *adapter.Delivery) error {
 	log.Println("===== eu.CreateDeliveryLogic start =====")
 
-	// test location
-	// srcStation := []float64{37.497365670723944, 126.95591909983503} // 위도(lat), 경도(lon)
-	// tag := []float64{37.49719755738831, 126.95590032437323}
-	// destStation := []float64{37.4971933013496, 126.95619804955307}
-
-	// drone event element 제작
-	me := model.Element{
-		Elem: "drone",
-		Arg:  make(map[string]interface{}),
-	}
-	
 	srcStation, err := eu.rr.FindNode(d.SrcStationID)
 	if err != nil {
 		log.Println("no src station")
@@ -138,6 +128,7 @@ func (eu *eventUsecase) CreateDeliveryLogic(d *adapter.Delivery) error {
 	
 	destStationID, err := eu.rr.FindShortestPathStationID(destTag.Nid)
 	if err != nil {
+		log.Println("no dest station")
 		return err
 	}
 	destStation, err := eu.rr.FindNode(destStationID)
@@ -147,37 +138,44 @@ func (eu *eventUsecase) CreateDeliveryLogic(d *adapter.Delivery) error {
 	}
 	log.Println("destStation : ", destStation)
 
-	// wp 초기화
-	wp := struct{
-		WP0 [][]float64 "json:\"wp0\""
-		WP1 [][]float64 "json:\"wp1\""
-	}{}
+	srcStationLoc := []float64{37.497365670723944, 126.95591909983503} // 위도(lat), 경도(lon)
+	tagLoc := []float64{37.49719755738831, 126.95590032437323}
+	destStationLoc := []float64{37.4971933013496, 126.95619804955307}
 
-	srcStationLoc := []float64{srcStation.Location.Lat, srcStation.Location.Lon} // 위도(lat), 경도(lon)
-	tagLoc := []float64{destTag.Location.Lat, destTag.Location.Lon}
-	destStationLoc := []float64{destStation.Location.Lat, destStation.Location.Lon}
+	// srcStationLoc := []float64{srcStation.Location.Lat, srcStation.Location.Lon} // 위도(lat), 경도(lon)
+	// tagLoc := []float64{destTag.Location.Lat, destTag.Location.Lon}
+	// destStationLoc := []float64{destStation.Location.Lat, destStation.Location.Lon}
 
-	wp.WP0 = append(wp.WP0, srcStationLoc)
-	wp.WP0 = append(wp.WP0, tagLoc)
-	wp.WP1 = append(wp.WP1, tagLoc)
-	wp.WP1 = append(wp.WP1, destStationLoc)
+	// path 초기화
+	path := [][]float64{}
+	path = append(path, srcStationLoc)
+	path = append(path, tagLoc)
+	path = append(path, destStationLoc)
 
-	me.Arg["drone_id"] = d.DroneID
-	me.Arg["value"] = wp
+	// drone event element 생성
+	me := model.Element{
+		Elem: "drone",
+		Arg:  map[string]interface{} {
+			"nid": "DRO" + strconv.Itoa(d.DroneID),
+			"values": path,
+			"tagidx": 1, // TODO
+		},
+	}
 
-	// drone event logic 제작
+	// drone event logic 생성
 	ml := model.Logic{
 		LogicName: "drone",
 		Elems:	   []model.Element{me},
 		NodeID:	   d.DroneID,
 	}
+	adapter.LogicToModel(&ml)
 
 	log.Println("ml : ", ml)
 	return eu.ls.CreateAndStartLogic(&ml)
 }
+*/
 
 func (eu *eventUsecase) CreateDelivery(d *adapter.Delivery) error {
 	md := adapter.DeliveryToModel(d)
-	eu.rr.CreateDelivery(d.ID, &md)
-	return nil
+	return eu.rr.CreateDelivery(d.ID, &md)
 }
