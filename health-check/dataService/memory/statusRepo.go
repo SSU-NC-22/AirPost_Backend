@@ -57,22 +57,22 @@ func (sr *statusRepo) UpdateTable(states adapter.States) []model.NodeStatus { //
 
 func (sr *statusRepo) updateNodeStatus(sinkID int, ns []adapter.NodeState, t time.Time) []model.NodeStatus { // 어답더 계층의 NodeState상태와 메모리 계층의 statusRepo의 status table을 동기화시켜 주는 것
 	res := []model.NodeStatus{}
-	nsTable := map[int]bool{} // NodeState 존재 여부
+	nsTable := map[int]bool{} // adapter.NodeState 존재 여부
 
 	// update the status checked from the sink node
 	// 상태가 바뀐 NodeStatus에 대한 정보만 res에 추가
-	for _, v := range ns { // v는 NodeState 배열 중 한 원소
+	for _, v := range ns { // v는 adapter.NodeState 배열 중 한 원소
 		nsTable[v.NodeID] = true
 		nodeState, ok := sr.table[sinkID][v.NodeID]
 		
 		if !ok { // if new nodeState, regist new state
-			tempState := model.NewStatus(v.State, t)
+			tempState := model.NewStatus(v, t)
 			sr.table[sinkID][v.NodeID] = tempState
-			res = append(res, model.NodeStatus{NodeID: v.NodeID, State: tempState.State, Battery: v.Battery, Location: v.Location})
+			res = append(res, model.NodeStatus{NodeID: v.NodeID, State: tempState.State, Battery: tempState.Battery, Location: tempState.Location})
 			continue
 		}
-		if isChanged := nodeState.UpdateState(v.State, t); isChanged {
-			res = append(res, model.NodeStatus{NodeID: v.NodeID, State: nodeState.State, Battery: v.Battery, Location: v.Location})
+		if isChanged := nodeState.UpdateState(v, t); isChanged {
+			res = append(res, model.NodeStatus{NodeID: v.NodeID, State: nodeState.State, Battery: nodeState.Battery, Location: nodeState.Location})
 		}
 		sr.table[sinkID][v.NodeID] = nodeState
 	}
@@ -86,7 +86,7 @@ func (sr *statusRepo) updateNodeStatus(sinkID int, ns []adapter.NodeState, t tim
 				delete(sr.table[sinkID], k)
 			} else {
 				sr.table[sinkID][k] = v
-				res = append(res, model.NodeStatus{NodeID: k, State: v.State}) // , Battery: v.Battery
+				res = append(res, model.NodeStatus{NodeID: k, State: v.State, Battery: v.Battery, Location: v.Location})
 			}
 		}
 	}

@@ -1,7 +1,10 @@
 package model
 
 import (
+	"log"
 	"time"
+
+	"github.com/eunnseo/AirPost/health-check/adapter"
 	// "github.com/eunnseo/AirPost/health-check/setting"
 )
 
@@ -26,15 +29,19 @@ type NodeStatus struct {
 type Status struct {
 	State       int       `json:"state"`
 	Work        bool      `json:"work"`
+	Battery     int       `json:"battery"`
+	Location    []float64 `json:"location"`
 	LastConnect time.Time `json:"last_connect"`
 }
 
-func NewStatus(work bool, t time.Time) Status { // 인자로 받은 work 여부로 Status 구조체 설정
+func NewStatus(ns adapter.NodeState, t time.Time) Status { // 인자로 받은 work 여부로 Status 구조체 설정
 	res := Status{
-		Work:        work,
+		Work:        ns.State,
+		Battery:     ns.Battery,
+		Location:    ns.Location,
 		LastConnect: t,
 	}
-	if work {
+	if ns.State {
 		res.State = GREEN
 	} else {
 		res.State = RED
@@ -54,25 +61,44 @@ func (s *Status) setState(v int) { // 인자로 받은 v로 Status구조체 변�
 	}
 }
 
-func (s *Status) UpdateState(work bool, t time.Time) bool {
-	isChange := false
+func (s *Status) UpdateState(ns adapter.NodeState, t time.Time) bool {
+	isChanged := false
+
 	// Update time for drop
-	if work {
+	if ns.State {
 		s.LastConnect = t
 	}
 	if s.State == YELLOW {
-		if work {
+		if ns.State {
 			s.setState(GREEN)
 		} else {
 			s.setState(RED)
 		}
-		isChange = true
-	} else if s.Work != work {
+		isChanged = true
+	} else if s.Work != ns.State {
 		s.setState(YELLOW)
-		isChange = true
+		isChanged = true
 	}
-	return isChange
+
+	// Update battery
+	if s.Battery != ns.Battery {
+		log.Println("changed battery")
+		s.Battery = ns.Battery
+		isChanged = true
+	}
+
+	// Update location
+	for i, loc := range ns.Location {
+		if s.Location[i] != loc {
+			log.Println("changed location")
+			s.Location[i] = loc
+			isChanged = true
+		}
+	}
+
+	return isChanged
 }
+
 func (s *Status) CheckDrop() bool {
 	s.setState(RED)
 	now := time.Now()
