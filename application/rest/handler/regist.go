@@ -682,7 +682,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	}
 	log.Println("droneid = ", droneid)
 
-	// Regist Delivery with DroneID and Drone - 필요한가?
+	// Regist Delivery with DroneID and Drone
 	drone, err := h.ru.GetNodeByID(droneid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -698,31 +698,31 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		return
 	}
 
-	// SrcStation과 연결된 drone unregist 
-	sd := model.StationDrone{
-		StationID: delivery.SrcStationID,
-		DroneID:   droneid,
-	}
-	err = h.ru.UnregistStationDrone(&sd)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// DestStation에 연결할 drone regist
+	// destTag와 가장 가까운 destStation을 정함
 	destStation, err := h.ru.GetShortestPathStation(delivery.DestStationID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	sd = model.StationDrone{
-		StationID: destStation.ID,
-		DroneID:   droneid,
-	}
-	err = h.ru.RegistStationDrone(&sd)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+
+	// SrcStation과 연결된 drone unregist, DestStation에 연결할 drone regist
+	if delivery.SrcStationID != destStation.ID {
+		sd := model.StationDrone{
+			StationID: delivery.SrcStationID,
+			DroneID:   droneid,
+		}
+		if err := h.ru.UnregistStationDrone(&sd); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		sd = model.StationDrone{
+			StationID: destStation.ID,
+			DroneID:   droneid,
+		}
+		if err := h.ru.RegistStationDrone(&sd); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
 
 	/* 드론에게 path 전달하는 logic 생성 및 실행 */
