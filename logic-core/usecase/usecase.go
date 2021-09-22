@@ -14,7 +14,7 @@ type EventUsecase interface {
 	CreateLogic(l *adapter.Logic) error
 	DeleteLogic(l *adapter.Logic) error
 
-	CreateDeliveryLogic(d *adapter.Delivery) error
+	// CreateDeliveryLogic(d *adapter.Delivery) error
 	CreateDelivery(d *adapter.Delivery) error
 }
 

@@ -18,6 +18,9 @@ func (lcuc *logicCoreUsecase) ToLogicData(kd *model.KafkaData) (model.LogicData,
 	for i, v := range n.SensorValues {
 		vl[v] = kd.Values[i]
 	}
+	if kd.NodeType == "DRO" {
+		vl["done"] = kd.Values[len(kd.Values)-1]
+	}
 	return model.LogicData{
 		Values:     vl,
 		NodeID:		kd.NodeID,

@@ -24,7 +24,7 @@ func Setup() {
 	dbConn.AutoMigrate(
 		&model.Topic{}, &model.LogicService{},
 		&model.Sink{}, &model.Node{},
-		&model.SensorValue{}, &model.Logic{}, &model.Actuator{},
+		&model.SensorValue{}, &model.Logic{},
 		&model.Delivery{}, &model.Path{}, &model.StationDrone{},
 	)
 

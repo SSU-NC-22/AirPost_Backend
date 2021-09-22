@@ -29,7 +29,6 @@ func (m *mux) CreateAndStartLogic(l *model.Logic) error {
 	log.Println("===== core CreateAndStartLogic start =====")
 	listen := make(chan model.LogicData, 100)
 	
-	log.Println("logic NodeID = ", l.NodeID)
 	lchs, ok := m.chTable[l.NodeID]
 	if !ok {
 		m.chTable[l.NodeID] = make(map[int]chan model.LogicData)

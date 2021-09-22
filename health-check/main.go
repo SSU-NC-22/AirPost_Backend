@@ -17,7 +17,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// TODO: ip 및 port 등등 세팅에 넣어서 처리하기
 func main() {
 	sr := memory.NewStatusRepo()
 

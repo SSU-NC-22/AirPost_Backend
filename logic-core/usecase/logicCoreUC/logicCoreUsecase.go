@@ -38,12 +38,12 @@ func NewLogicCoreUsecase(rr repository.RegistRepo,
 				log.Println("Error in NewLogicCoreUsecase in ToLogicData")
 				continue
 			}
-			log.Println("in NewLogicCoreUsecase, ld = ", ld)
+			log.Println("in NewLogicCoreUsecase, ld(LogicData) = ", ld)
 
 			lchs, err := lcu.ls.GetLogicChans(ld.NodeID)
 			if err != nil {
 				if ld.Node.Type == "DRO" {
-					log.Println("it's drone")
+					log.Println("it's drone") // delivery 없음
 					continue
 				} else {
 					log.Print("Error in NewLogicCoreUsecase : ")

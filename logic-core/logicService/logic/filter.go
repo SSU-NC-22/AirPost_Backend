@@ -63,18 +63,27 @@ func (te *TimeElement) Exec(d *model.LogicData) {
 	}
 }
 
-/*
-type LocElement struct { // 도착 알림을 위한 filter
+type ArrivalElement struct { // 도착 알림을 위한 filter
 	BaseElement
-	Value string `json:"value"`
-	Range []struct {
-		Start string `json:"start"`
-		End   string `json:"end"`
-	} `json:"range"`
+	Done float64 `json:"done"`
 }
 
-func (le *LocElement) Exec(d *model.LogicData) {
+func (ae *ArrivalElement) Exec(d *model.LogicData) {
 	
-	log.Println("!!!!in ValueElement.Exec !!!!")
+	log.Println("!!!!in ArrivalElement.Exec !!!!")
+	done, ok := d.Values["done"]
+	if !ok {
+		log.Println("in ArrivalElement.Exec, not ok")
+		return
+	}
+	isArrived := false
+
+	log.Println("ae.Done = ", ae.Done)
+	log.Println("done = ", done)
+	if ae.Done == done {
+		isArrived = true
+	}
+	if isArrived {
+		ae.BaseElement.Exec(d)
+	}
 }
-*/

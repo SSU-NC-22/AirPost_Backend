@@ -19,7 +19,6 @@ func init() {
 }
 
 type KafkaData struct {
-	// NodeID    int       `json:"node_id"`
 	NodeID    string    `json:"node_id"`
 	Values    []float64 `json:"values"`
 	Timestamp string    `json:"timestamp"`
@@ -34,10 +33,7 @@ func KafkaToModel(d *KafkaData) (model.KafkaData, error) {
 	log.Println("Success KafkaToModel")
 
 	nodeType := d.NodeID[:3]
-	log.Println("nodeType = ", nodeType)
-
-	var nodeID int
-	nodeID, err = strconv.Atoi(d.NodeID[3:])
+	nodeID, err := strconv.Atoi(d.NodeID[3:])
 	if err != nil {
 		log.Println("Error in KafkaToModel from strconv.Atoi")
 		return model.KafkaData{}, err
@@ -45,6 +41,7 @@ func KafkaToModel(d *KafkaData) (model.KafkaData, error) {
 	log.Println("nodeID = ", nodeID)
 
 	return model.KafkaData{
+		NodeType:  nodeType,
 		NodeID:    nodeID,
 		Values:    d.Values,
 		Timestamp: t,

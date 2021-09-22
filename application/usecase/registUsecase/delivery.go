@@ -29,7 +29,7 @@ func (ru *registUsecase) GetShortestPathStation(tagid int) (station *model.Node,
 	}
 	// to do : if pl empty
 	min := pl[0].Distance
-	nid := 0
+	nid := pl[0].StationID
 	for _, path := range(pl) {
 		if (path.Distance < min) {
 			min = path.Distance
@@ -56,18 +56,32 @@ func (ru *registUsecase) UnregistPath(p *model.Path) error {
 }
 
 /**************************************************************/
-/* drone_loc regist usecase                                   */
+/* station_drone regist usecase                               */
 /**************************************************************/
+func (ru *registUsecase) GetStationDrone(stationid int, droneid int) (*model.StationDrone, error) {
+	return ru.sdr.Find(stationid, droneid)
+}
+
 func (ru *registUsecase) GetStationDroneByStationID(stationid int) ([]model.StationDrone, error) {
 	return ru.sdr.FindsByStationID(stationid)
 }
 
+func (ru *registUsecase) GetStationDroneByDroneID(droneid int) ([]model.StationDrone, error) {
+	return ru.sdr.FindsByDroneID(droneid)
+}
+
 func (ru *registUsecase) RegistStationDrone(sd *model.StationDrone) error {
-	// sd.Reserved = 1
 	return ru.sdr.Create(sd)
 }
 
 func (ru *registUsecase) UnregistStationDrone(sd *model.StationDrone) error {
-	// sd.Reserved = 0
 	return ru.sdr.Delete(sd)
+}
+
+func (ru *registUsecase) UnregistStationDroneByStationID(sd *model.StationDrone) error {
+	return ru.sdr.DeleteByStationID(sd)
+}
+
+func (ru *registUsecase) UnregistStationDroneByDroneID(sd *model.StationDrone) error {
+	return ru.sdr.DeleteByDroneID(sd)
 }

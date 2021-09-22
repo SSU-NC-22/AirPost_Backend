@@ -26,14 +26,6 @@ type NodeRepo interface {
 	Delete(*model.Node) error
 }
 
-type ActuatorRepo interface {
-	GetPages(size int) int
-	FindsWithName() ([]model.Actuator, error)
-	FindsPage(p adapter.Page) ([]model.Actuator, error)
-	Create(*model.Actuator) error
-	Delete(*model.Actuator) error
-}
-
 type LogicRepo interface {
 	FindsWithNodeValues() ([]model.Logic, error)
 	Create(*model.Logic) error
@@ -68,7 +60,11 @@ type PathRepo interface {
 }
 
 type StationDroneRepo interface {
+	Find(stationid int, droneid int) (sd *model.StationDrone, err error)
 	FindsByStationID(stationid int) ([]model.StationDrone, error)
+	FindsByDroneID(droneid int) ([]model.StationDrone, error)
 	Create(*model.StationDrone) error
 	Delete(*model.StationDrone) error
+	DeleteByStationID(*model.StationDrone) error
+	DeleteByDroneID(*model.StationDrone) error
 }

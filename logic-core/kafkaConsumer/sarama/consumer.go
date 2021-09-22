@@ -100,8 +100,7 @@ func (consumer *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 			continue
 		}
 		
-		// log.Println("in ConsumeClaim, d = ", d)
-		// log.Println("1")
+		log.Println("in ConsumeClaim, d(model.KafkaData) = ", d)
 		consumer.out <- d // go to "in" in NewLogicCoreUsecase logicCoreUsecase.go
 	}
 

@@ -28,13 +28,12 @@ func main() {
 	lgr := sql.NewLogicRepo()
 	lsr := sql.NewLogicServiceRepo()
 	tpr := sql.NewTopicRepo()
-	acr := sql.NewActuatorkRepo()
 
 	dlr := sql.NewDeliveryRepo()
 	ptr := sql.NewPathRepo()
 	sdr := sql.NewStationDroneRepo()
 
-	ru := registUsecase.NewRegistUsecase(sir, ndr, lgr, lsr, tpr, acr, dlr, ptr, sdr)
+	ru := registUsecase.NewRegistUsecase(sir, ndr, lgr, lsr, tpr, dlr, ptr, sdr)
 	eu := eventUsecase.NewEventUsecase(sir, lsr)
 
 	h := handler.NewHandler(ru, eu)
@@ -85,12 +84,6 @@ func setRegistrationRoute(r *gin.Engine, h *handler.Handler) {
 			node.GET("/:sinkid", h.ListNodesBySink)
 			node.POST("", h.RegistNode)
 			node.DELETE("/:id", h.UnregistNode)
-		}
-		actuator := regist.Group("/actuator")
-		{
-			actuator.GET("", h.ListActuators)
-			actuator.POST("", h.RegistActuator)
-			actuator.DELETE("/:id", h.UnregistActuator)
 		}
 		logic := regist.Group("/logic")
 		{

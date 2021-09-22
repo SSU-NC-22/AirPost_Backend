@@ -24,12 +24,6 @@ type RegistUsecase interface {
 	RegistNode(n *model.Node) error
 	UnregistNode(n *model.Node) error
 
-	GetActuatorPageCount(size int) int
-	GetActuators() ([]model.Actuator, error)
-	GetActuatorsPage(p adapter.Page) ([]model.Actuator, error)
-	RegistActuator(a *model.Actuator) error
-	UnregistActuator(a *model.Actuator) error
-
 	GetLogics() ([]model.Logic, error)
 	RegistLogic(l *model.Logic) error
 	UnregistLogic(l *model.Logic) error
@@ -50,9 +44,13 @@ type RegistUsecase interface {
 	RegistPath(p *model.Path) error
 	UnregistPath(p *model.Path) error
 
+	GetStationDrone(stationid int, droneid int) (*model.StationDrone, error)
 	GetStationDroneByStationID(stationid int) ([]model.StationDrone, error)
+	GetStationDroneByDroneID(droneid int) ([]model.StationDrone, error)
 	RegistStationDrone(sd *model.StationDrone) error
 	UnregistStationDrone(sd *model.StationDrone) error
+	UnregistStationDroneByStationID(sd *model.StationDrone) error
+	UnregistStationDroneByDroneID(sd *model.StationDrone) error
 }
 
 // for event channel

@@ -250,6 +250,7 @@ func (h *Handler) RegistNode(c *gin.Context) {
 		sd := model.StationDrone{
 			StationID: stationid,
 			DroneID:   node.ID,
+			Usable:    true,
 		}
 
 		err = h.ru.RegistStationDrone(&sd)
@@ -361,90 +362,30 @@ func (h *Handler) UnregistNode(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	node := model.Node{ID: id}
 
-	err = h.ru.UnregistNode(&node)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	h.eu.DeleteNodeEvent(&node)
-	go h.eu.PostToSink(node.SinkID)
-	c.JSON(http.StatusOK, node)
-}
-
-/**************************************************************/
-/* Actuator handler                                           */
-/**************************************************************/
-// ListActuator ...
-func (h *Handler) ListActuators(c *gin.Context) {
-	var (
-		err       error
-		actuators []model.Actuator
-		page      adapter.Page
-		pages     int
-	)
-	log.Println("in ListActuators")
-	if c.Bind(&page); page.IsBinded() {
-		if page.Size == 0 {
-			page.Size = 10
-		}
-		if actuators, err = h.ru.GetActuatorsPage(page); err != nil {
+	// if drone, 해당 드론의 station_drone 항목도 같이 삭제
+	// if station, station_drone 항목이 존재할 경우 삭제 불가능
+	node, _ := h.ru.GetNodeByID(id)
+	if node.Type == "DRO" {
+		sd := model.StationDrone{DroneID: id}
+		h.ru.UnregistStationDroneByDroneID(&sd)
+	} else if node.Type == "STA" {
+		sdl, _ := h.ru.GetStationDroneByStationID(id)
+		if len(sdl) > 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		if page.Page == 1 {
-			pages = h.ru.GetActuatorPageCount(page.Size)
-		}
-		c.JSON(http.StatusOK, gin.H{"actuators": actuators, "pages": pages})
-		return
-	} else {
-		actuators, err := h.ru.GetActuators()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusOK, actuators)
-		return
 	}
-
-}
-
-// RegistActuator ...
-func (h *Handler) RegistActuator(c *gin.Context) {
-	var actuator model.Actuator
-	log.Println("in RegistActuator")
-	if err := c.ShouldBindJSON(&actuator); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	err := h.ru.RegistActuator(&actuator)
+	
+	err = h.ru.UnregistNode(node)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, actuator)
-}
 
-// UnregistActuator ...
-func (h *Handler) UnregistActuator(c *gin.Context) {
-	log.Println("in UnregistActuator")
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-	actuator := model.Actuator{ID: id}
-
-	err = h.ru.UnregistActuator(&actuator)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, actuator)
+	h.eu.DeleteNodeEvent(node)
+	go h.eu.PostToSink(node.SinkID)
+	c.JSON(http.StatusOK, node)
 }
 
 /**************************************************************/
@@ -671,7 +612,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 
 	droneid := -1
 	for _, sd := range(sdl) {
-		if sd.Reserved == 0 {
+		if sd.Usable {
 			droneid = sd.DroneID
 			break
 		}
@@ -698,32 +639,105 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		return
 	}
 
-	// SrcStation과 연결된 drone unregist 
-	sd := model.StationDrone{
-		StationID: delivery.SrcStationID,
-		DroneID:   droneid,
-	}
-	err = h.ru.UnregistStationDrone(&sd)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// DestStation에 연결할 drone regist
+	// destTag와 가장 가까운 destStation을 정함
 	destStation, err := h.ru.GetShortestPathStation(delivery.DestStationID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	sd = model.StationDrone{
-		StationID: destStation.ID,
-		DroneID:   droneid,
+
+	// SrcStation과 연결된 drone unregist, DestStation에 연결할 drone regist
+	if delivery.SrcStationID != destStation.ID {
+		sd := model.StationDrone{
+			StationID: delivery.SrcStationID,
+			DroneID:   droneid,
+		}
+		if err := h.ru.UnregistStationDrone(&sd); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		sd = model.StationDrone{
+			StationID: destStation.ID,
+			DroneID:   droneid,
+			Usable:    true,
+		}
+		if err := h.ru.RegistStationDrone(&sd); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
 	}
-	err = h.ru.RegistStationDrone(&sd)
+
+	/* 드론에게 path 전달하는 logic 생성 및 실행 */
+	// TODO
+	srcStationLoc := []float64{37.497365670723944, 126.95591909983503} // 위도(lat), 경도(lon)
+	tagLoc := []float64{37.49719755738831, 126.95590032437323}
+	destStationLoc := []float64{37.4971933013496, 126.95619804955307}
+
+	path := [][]float64{}
+	path = append(path, srcStationLoc)
+	path = append(path, tagLoc)
+	path = append(path, destStationLoc)
+
+	aPathLogicElement := adapter.Element{
+		Elem: "drone",
+		Arg:  map[string]interface{} {
+			"nid":    "DRO" + strconv.Itoa(delivery.DroneID),
+			"values": path,
+			"tagidx": 1, // TODO
+		},
+	}
+	aPathLogic := adapter.Logic{
+		LogicName: "drone",
+		Elems: []adapter.Element{aPathLogicElement},
+		NodeID: delivery.DroneID,
+		Node: delivery.Drone,
+	}
+	log.Println("aPathLogic = ", aPathLogic)
+
+	pathLogic, err := adapter.LogicToModel(&aPathLogic)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	// err = h.ru.RegistLogic(&pathLogic)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
+	h.eu.CreateLogicEvent(&pathLogic)
+
+	/* 도착 알람을 위한 logic 생성 및 실행 */
+	e1 := adapter.Element{
+		Elem: "arrival",
+		Arg: map[string]interface{}{
+			"done": 1,
+		},
+	}
+	e2 := adapter.Element{
+		Elem: "email",
+		Arg: map[string]interface{}{
+			// "text": delivery.Email,
+			"text": "eunseo@q.ssu.ac.kr",
+		},
+	}
+	aAlarmLogic := adapter.Logic{
+		LogicName: delivery.OrderNum,
+		Elems: []adapter.Element{e1, e2},
+		NodeID: delivery.DroneID,
+	}
+	log.Println("aAlarmLogic = ", aAlarmLogic)
+
+	alarmLogic, err := adapter.LogicToModel(&aAlarmLogic)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	// err = h.ru.RegistLogic(&alarmLogic)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
+	h.eu.CreateLogicEvent(&alarmLogic)
 
 	go h.eu.CreateDeliveryEvent(&delivery)
 	c.JSON(http.StatusOK, delivery)
@@ -731,7 +745,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 }
 
 func (h *Handler) GetDroneID(c *gin.Context) {
-	log.Println("===== handler GetDroneID func start =====")
+	// log.Println("===== handler GetDroneID func start =====")
 	ordernum, err := strconv.Atoi(c.Param("orderNum"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -745,7 +759,6 @@ func (h *Handler) GetDroneID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"drone_id": delivery.DroneID})
-	log.Println("===== handler GetDroneID func fin =====")
 }
 
 /**************************************************************/
@@ -779,6 +792,7 @@ func (h *Handler) GetTracking(c *gin.Context) {
 	}
 
 	tracking := model.Tracking{
+		DroneNid: delivery.DroneID,
 		SrcLat:   src.LocLat,
 		SrcLng:	  src.LocLon,
 		DestLat:  dest.LocLat,

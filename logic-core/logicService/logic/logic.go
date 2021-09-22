@@ -36,7 +36,6 @@ func BuildLogic(l *model.Logic) (Elementer, error) {
 		return nil, fmt.Errorf("invalid Element's length: %v", *l)
 	}
 	first, err := UnmarshalElement(&l.Elems[0])
-	log.Println("in BuildLogic, l = ", l)
 	if err != nil {
 		return nil, err
 	}
@@ -88,12 +87,14 @@ func GetElementer(elem string) Elementer {
 		return &ValueElement{}
 	case "time":
 		return &TimeElement{}
+	case "arrival":
+		return &ArrivalElement{}
 	case "email":
 		return &EmailElement{Interval: make(map[string]bool)}
 	case "actuator":
 		return &ActuatorElement{Interval: make(map[string]bool)}
 	case "drone":
-		return &DroneElement{Interval: make(map[string]bool)}
+		return &DroneElement{Sent: false}
 	default:
 		return nil
 	}
