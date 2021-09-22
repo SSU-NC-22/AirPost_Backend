@@ -20,6 +20,10 @@ func (sdr *stationDroneRepo) FindsByStationID(stationid int) (sdl []model.Statio
 	return sdl, sdr.db.Where("station_id=?", stationid).Find(&sdl).Error
 }
 
+func (sdr *stationDroneRepo) FindByStationIDDroneID(stationid int, droneid int) (sd *model.StationDrone, err error) {
+	return sd, sdr.db.Where("station_id=?", stationid).Where("drone_id=?", droneid).Find(&sd).Error
+}
+
 func (sdr *stationDroneRepo) Create(sd *model.StationDrone) error {
 	return sdr.db.Omit(clause.Associations).Create(sd).Error
 }

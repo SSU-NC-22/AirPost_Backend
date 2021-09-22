@@ -671,7 +671,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 
 	droneid := -1
 	for _, sd := range(sdl) {
-		if sd.Reserved == 0 {
+		if sd.Usable {
 			droneid = sd.DroneID
 			break
 		}
@@ -718,6 +718,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		sd = model.StationDrone{
 			StationID: destStation.ID,
 			DroneID:   droneid,
+			Usable:    true,
 		}
 		if err := h.ru.RegistStationDrone(&sd); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

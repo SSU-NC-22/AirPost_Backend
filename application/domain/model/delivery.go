@@ -29,7 +29,7 @@ type StationDrone struct{
 	StationID int  `json:"station_id" gorm:"not null"`
 	Station	  Node `json:"station" gorm:"foreignKey:StationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	DroneID   int  `json:"drone_id" gorm:"not null"`
-	Reserved  int  `json:"reserved" gorm:"not null"` // 0 : 사용가능, 1 : 예약됨
+	Usable    bool `json:"usable" gorm:"not null"` // true : 사용가능, false : 불가능
 }
 
 func (StationDrone) TableName() string {

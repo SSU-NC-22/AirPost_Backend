@@ -51,6 +51,7 @@ type RegistUsecase interface {
 	UnregistPath(p *model.Path) error
 
 	GetStationDroneByStationID(stationid int) ([]model.StationDrone, error)
+	GetStationDroneByStationIDDroneID(stationid int, droneid int) (*model.StationDrone, error)
 	RegistStationDrone(sd *model.StationDrone) error
 	UnregistStationDrone(sd *model.StationDrone) error
 }

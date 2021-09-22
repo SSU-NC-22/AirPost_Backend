@@ -62,12 +62,14 @@ func (ru *registUsecase) GetStationDroneByStationID(stationid int) ([]model.Stat
 	return ru.sdr.FindsByStationID(stationid)
 }
 
+func (ru *registUsecase) GetStationDroneByStationIDDroneID(stationid int, droneid int) (*model.StationDrone, error) {
+	return ru.sdr.FindByStationIDDroneID(stationid, droneid)
+}
+
 func (ru *registUsecase) RegistStationDrone(sd *model.StationDrone) error {
-	// sd.Reserved = 1
 	return ru.sdr.Create(sd)
 }
 
 func (ru *registUsecase) UnregistStationDrone(sd *model.StationDrone) error {
-	// sd.Reserved = 0
 	return ru.sdr.Delete(sd)
 }
