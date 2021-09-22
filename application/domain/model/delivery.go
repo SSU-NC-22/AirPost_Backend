@@ -29,6 +29,7 @@ type StationDrone struct{
 	StationID int  `json:"station_id" gorm:"not null"`
 	Station	  Node `json:"station" gorm:"foreignKey:StationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	DroneID   int  `json:"drone_id" gorm:"not null"`
+	Drone	  Node `json:"drone" gorm:"foreignKey:DroneID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Usable    bool `json:"usable" gorm:"not null"` // true : 사용가능, false : 불가능
 }
 

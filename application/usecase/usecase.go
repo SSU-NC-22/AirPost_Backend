@@ -50,10 +50,13 @@ type RegistUsecase interface {
 	RegistPath(p *model.Path) error
 	UnregistPath(p *model.Path) error
 
+	GetStationDrone(stationid int, droneid int) (*model.StationDrone, error)
 	GetStationDroneByStationID(stationid int) ([]model.StationDrone, error)
-	GetStationDroneByStationIDDroneID(stationid int, droneid int) (*model.StationDrone, error)
+	GetStationDroneByDroneID(droneid int) ([]model.StationDrone, error)
 	RegistStationDrone(sd *model.StationDrone) error
 	UnregistStationDrone(sd *model.StationDrone) error
+	UnregistStationDroneByStationID(sd *model.StationDrone) error
+	UnregistStationDroneByDroneID(sd *model.StationDrone) error
 }
 
 // for event channel

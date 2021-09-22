@@ -68,8 +68,11 @@ type PathRepo interface {
 }
 
 type StationDroneRepo interface {
+	Find(stationid int, droneid int) (sd *model.StationDrone, err error)
 	FindsByStationID(stationid int) ([]model.StationDrone, error)
-	FindByStationIDDroneID(stationid int, droneid int) (sd *model.StationDrone, err error)
+	FindsByDroneID(droneid int) ([]model.StationDrone, error)
 	Create(*model.StationDrone) error
 	Delete(*model.StationDrone) error
+	DeleteByStationID(*model.StationDrone) error
+	DeleteByDroneID(*model.StationDrone) error
 }
