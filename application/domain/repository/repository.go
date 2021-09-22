@@ -26,14 +26,6 @@ type NodeRepo interface {
 	Delete(*model.Node) error
 }
 
-type ActuatorRepo interface {
-	GetPages(size int) int
-	FindsWithName() ([]model.Actuator, error)
-	FindsPage(p adapter.Page) ([]model.Actuator, error)
-	Create(*model.Actuator) error
-	Delete(*model.Actuator) error
-}
-
 type LogicRepo interface {
 	FindsWithNodeValues() ([]model.Logic, error)
 	Create(*model.Logic) error
