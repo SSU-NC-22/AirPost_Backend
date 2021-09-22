@@ -250,6 +250,7 @@ func (h *Handler) RegistNode(c *gin.Context) {
 		sd := model.StationDrone{
 			StationID: stationid,
 			DroneID:   node.ID,
+			Usable:    true,
 		}
 
 		err = h.ru.RegistStationDrone(&sd)
@@ -361,15 +362,28 @@ func (h *Handler) UnregistNode(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	node := model.Node{ID: id}
 
-	err = h.ru.UnregistNode(&node)
+	// if drone, 해당 드론의 station_drone 항목도 같이 삭제
+	// if station, station_drone 항목이 존재할 경우 삭제 불가능
+	node, _ := h.ru.GetNodeByID(id)
+	if node.Type == "DRO" {
+		sd := model.StationDrone{DroneID: id}
+		h.ru.UnregistStationDroneByDroneID(&sd)
+	} else if node.Type == "STA" {
+		sdl, _ := h.ru.GetStationDroneByStationID(id)
+		if len(sdl) > 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+	}
+	
+	err = h.ru.UnregistNode(node)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	h.eu.DeleteNodeEvent(&node)
+	h.eu.DeleteNodeEvent(node)
 	go h.eu.PostToSink(node.SinkID)
 	c.JSON(http.StatusOK, node)
 }
@@ -804,7 +818,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 }
 
 func (h *Handler) GetDroneID(c *gin.Context) {
-	log.Println("===== handler GetDroneID func start =====")
+	// log.Println("===== handler GetDroneID func start =====")
 	ordernum, err := strconv.Atoi(c.Param("orderNum"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -818,7 +832,6 @@ func (h *Handler) GetDroneID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"drone_id": delivery.DroneID})
-	log.Println("===== handler GetDroneID func fin =====")
 }
 
 /**************************************************************/

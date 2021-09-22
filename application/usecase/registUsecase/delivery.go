@@ -56,7 +56,7 @@ func (ru *registUsecase) UnregistPath(p *model.Path) error {
 }
 
 /**************************************************************/
-/* drone_loc regist usecase                                   */
+/* station_drone regist usecase                               */
 /**************************************************************/
 func (ru *registUsecase) GetStationDrone(stationid int, droneid int) (*model.StationDrone, error) {
 	return ru.sdr.Find(stationid, droneid)
