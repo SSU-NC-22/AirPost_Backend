@@ -739,7 +739,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	// }
 	h.eu.CreateLogicEvent(&alarmLogic)
 
-	go h.eu.CreateDeliveryEvent(&delivery)
+	// go h.eu.CreateDeliveryEvent(&delivery)
 	c.JSON(http.StatusOK, delivery)
 	log.Println("===== handler RegistDelivery func fin =====")
 }
