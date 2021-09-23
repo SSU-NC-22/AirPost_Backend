@@ -640,7 +640,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	}
 
 	// destTag와 가장 가까운 destStation을 정함
-	destStation, err := h.ru.GetShortestPathStation(delivery.DestStationID)
+	destStation, err := h.ru.GetShortestPathStation(delivery.DestTagID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -785,7 +785,7 @@ func (h *Handler) GetTracking(c *gin.Context) {
 		return
 	}
 
-	dest, err := h.ru.GetNodeByID(delivery.DestStationID)
+	dest, err := h.ru.GetNodeByID(delivery.DestTagID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
