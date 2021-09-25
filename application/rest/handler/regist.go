@@ -640,7 +640,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	}
 
 	// destTag와 가장 가까운 destStation을 정함
-	destStation, err := h.ru.GetShortestPathStation(delivery.DestStationID)
+	destStation, err := h.ru.GetShortestPathStation(delivery.DestTagID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -699,11 +699,11 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// err = h.ru.RegistLogic(&pathLogic)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	return
-	// }
+	err = h.ru.RegistLogic(&pathLogic)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	h.eu.CreateLogicEvent(&pathLogic)
 
 	/* 도착 알람을 위한 logic 생성 및 실행 */
@@ -732,14 +732,14 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// err = h.ru.RegistLogic(&alarmLogic)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	return
-	// }
+	err = h.ru.RegistLogic(&alarmLogic)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	h.eu.CreateLogicEvent(&alarmLogic)
 
-	go h.eu.CreateDeliveryEvent(&delivery)
+	// go h.eu.CreateDeliveryEvent(&delivery)
 	c.JSON(http.StatusOK, delivery)
 	log.Println("===== handler RegistDelivery func fin =====")
 }
@@ -785,7 +785,7 @@ func (h *Handler) GetTracking(c *gin.Context) {
 		return
 	}
 
-	dest, err := h.ru.GetNodeByID(delivery.DestStationID)
+	dest, err := h.ru.GetNodeByID(delivery.DestTagID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

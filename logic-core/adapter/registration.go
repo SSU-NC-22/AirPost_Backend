@@ -135,32 +135,31 @@ type LogicService struct {
 }
 
 type Delivery struct {
-	ID			  int		`json:"id"`
-	OrderNum	  string	`json:"order_num"`
-	DroneID		  int		`json:"drone_id"`
-	Drone		  Node		`json:"drone_node"`
-
-	SrcName		  string	`json:"src_name"`
-	SrcPhone	  string	`json:"src_phone"`
-	SrcStationID  int		`json:"src_station_id"`
-
-	DestName	  string	`json:"dest_name"`
-	DestPhone	  string	`json:"dest_phone"`
-	DestStationID int		`json:"dest_station_id"`
-	
-	CreatedAt	  time.Time `json:"created_at"`
+	ID			 int	   `json:"id"`
+	OrderNum	 string	   `json:"order_num"`
+	DroneID		 int	   `json:"drone_id"`
+	Drone		 Node	   `json:"drone_node"`
+	Email        string    `json:"email"`
+	SrcName		 string	   `json:"src_name"`
+	SrcPhone	 string	   `json:"src_phone"`
+	SrcStationID int	   `json:"src_station_id"`
+	DestName	 string	   `json:"dest_name"`
+	DestPhone	 string	   `json:"dest_phone"`
+	DestTagID    int	   `json:"dest_tag_id"`
+	CreatedAt	 time.Time `json:"created_at"`
 }
 
 func DeliveryToModel(d *Delivery) (model.Delivery) {
 	return model.Delivery{
-		Did:		   d.ID,
-		OrderNum:	   d.OrderNum,
-		SrcName:	   d.SrcName,
-		SrcPhone:	   d.SrcPhone,
-		SrcStationID:  d.SrcStationID,
-		DestName:	   d.DestName,
-		DestPhone:     d.DestPhone,
-		DestTagID: 	   d.DestStationID,
+		Did:		  d.ID,
+		OrderNum:	  d.OrderNum,
+		Email:        d.Email,
+		SrcName:	  d.SrcName,
+		SrcPhone:     d.SrcPhone,
+		SrcStationID: d.SrcStationID,
+		DestName:	  d.DestName,
+		DestPhone:    d.DestPhone,
+		DestTagID: 	  d.DestTagID,
 	}
 }
 

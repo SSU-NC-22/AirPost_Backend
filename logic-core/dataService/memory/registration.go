@@ -44,7 +44,7 @@ func NewRegistRepo() (*registRepo, map[int]model.Sink) {
 type registRepo struct {
 	nodeRepo
 	sinkAddrRepo
-	nodeInfoRepo // not used
+	nodeInfoRepo
 	pathRepo
 	deliveryRepo
 }

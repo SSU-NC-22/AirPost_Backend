@@ -138,11 +138,5 @@ func (h *Handler) CreateDelivery(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	// if err := h.evuc.CreateDeliveryLogic(&ad); err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	// 	return
-	// }
-
 	c.JSON(http.StatusOK, ad)
 }

@@ -26,6 +26,7 @@ type Nodeinfo struct {
 type Delivery struct {
 	Did			  int  	 `json:"did"`
 	OrderNum	  string `json:"order_num"`
+	Email         string `json:"email"`
 	SrcName		  string `json:"src_name"`
 	SrcPhone	  string `json:"src_phone"`
 	SrcStationID  int	 `json:"src_station_id"`
