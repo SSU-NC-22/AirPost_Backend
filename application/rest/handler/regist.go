@@ -98,7 +98,7 @@ func (h *Handler) RegistSink(c *gin.Context) {
 		return
 	}
 
-	err := h.ru.RegistSink(&sink) // sink.Topic 내용 채워짐
+	err := h.ru.RegistSink(&sink)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -175,7 +175,7 @@ func (h *Handler) ListNodes(c *gin.Context) {
 		fmt.Println(nodes)
 		c.JSON(http.StatusOK, gin.H{"nodes": nodes, "pages": pages})
 		return
-	} else if c.Bind((&square)); square.IsBinded() { // map
+	} else if c.Bind((&square)); square.IsBinded() {
 		if nodes, err = h.ru.GetNodesSquare(square); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -761,7 +761,6 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 }
 
 func (h *Handler) GetDroneID(c *gin.Context) {
-	// log.Println("===== handler GetDroneID func start =====")
 	ordernum, err := strconv.Atoi(c.Param("orderNum"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -819,5 +818,4 @@ func (h *Handler) GetTracking(c *gin.Context) {
 	log.Println("tracking : ", tracking)
 
 	c.JSON(http.StatusOK, tracking)
-	log.Println("===== handler GetTracking func fin =====")
 }

@@ -27,7 +27,6 @@ func (ru *registUsecase) GetShortestPathStation(tagid int) (station *model.Node,
 	if err != nil {
 		return nil, err
 	}
-	// to do : if pl empty
 	min := pl[0].Distance
 	nid := pl[0].StationID
 	for _, path := range(pl) {
