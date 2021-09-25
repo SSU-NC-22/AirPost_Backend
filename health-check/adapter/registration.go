@@ -8,7 +8,6 @@ type Node struct {
 		Lat float64 `json:"lat"`
 		Lon float64 `json:"lon"`
 	} `json:"location"`
-	// SinkID uint `json:"sink_id"`
 }
 
 type Sink struct {

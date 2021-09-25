@@ -34,7 +34,7 @@ type Status struct {
 	LastConnect time.Time `json:"last_connect"`
 }
 
-func NewStatus(ns adapter.NodeState, t time.Time) Status { // 인자로 받은 work 여부로 Status 구조체 설정
+func NewStatus(ns adapter.NodeState, t time.Time) Status {
 	res := Status{
 		Work:        ns.State,
 		Battery:     ns.Battery,
@@ -49,7 +49,7 @@ func NewStatus(ns adapter.NodeState, t time.Time) Status { // 인자로 받은 w
 	return res
 }
 
-func (s *Status) setState(v int) { // 인자로 받은 v로 Status구조체 변경
+func (s *Status) setState(v int) {
 	s.State = v
 	switch v {
 	case RED:

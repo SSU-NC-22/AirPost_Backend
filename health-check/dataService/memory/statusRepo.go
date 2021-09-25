@@ -27,7 +27,7 @@ func NewStatusRepo() *statusRepo {
 
 	statusTable := &statusRepo{
 		mu:    &sync.RWMutex{},
-		table: map[int]map[int]model.Status{}, // [SinkID][NodeID]의 model.Status 저장
+		table: map[int]map[int]model.Status{},
 	}
 	return statusTable
 }
@@ -61,7 +61,7 @@ func (sr *statusRepo) updateNodeStatus(sinkID int, ns []adapter.NodeState, t tim
 
 	// update the status checked from the sink node
 	// 상태가 바뀐 NodeStatus에 대한 정보만 res에 추가
-	for _, v := range ns { // v는 adapter.NodeState 배열 중 한 원소
+	for _, v := range ns {
 		nsTable[v.NodeID] = true
 		nodeState, ok := sr.table[sinkID][v.NodeID]
 		
