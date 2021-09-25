@@ -20,13 +20,3 @@ type EventUsecase interface {
 type LogicCoreUsecase interface {
 	AppendSinkAddr(sa *adapter.SinkAddr) error
 }
-
-// type sinkAddrRepo struct {
-// 	samu  *sync.RWMutex
-// 	addrs []model.Sink
-// }
-
-// func (sar *sinkAddrRepo) appendSinkAddr(s model.Sink) error {
-// 	sar.addrs = append(sar.addrs, s)
-// 	return nil
-// }

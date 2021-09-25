@@ -32,7 +32,10 @@ func (m *mux) CreateAndStartLogic(l *model.Logic) error {
 	lchs, ok := m.chTable[l.NodeID]
 	if !ok {
 		m.chTable[l.NodeID] = make(map[int]chan model.LogicData)
-		lchs, _ = m.chTable[l.NodeID]
+		lchs, ok = m.chTable[l.NodeID]
+		if !ok {
+			return errors.New("cannot make logic channel")
+		}
 	}
 	if _, ok := lchs[l.ID]; ok {
 		close(listen)
@@ -56,7 +59,6 @@ func (m *mux) CreateAndStartLogic(l *model.Logic) error {
 }
 
 func (m *mux) RemoveLogic(nid, lid int) error {
-	// log.Println("===== core RemoveLogic start =====")
 	ch, ok := m.chTable[nid][lid]
 	if !ok {
 		return fmt.Errorf("GetLogicChans : cannot find listen channels")
@@ -70,7 +72,6 @@ func (m *mux) RemoveLogic(nid, lid int) error {
 }
 
 func (m *mux) GetLogicChans(nid int) (map[int]chan model.LogicData, error) {
-	// log.Println("===== core GetLogicChans start =====")
 	lchs, ok := m.chTable[nid]
 	if !ok || len(lchs) == 0 {
 		return nil, fmt.Errorf("GetLogicChans : cannot find listen channels")

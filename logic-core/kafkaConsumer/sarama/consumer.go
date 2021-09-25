@@ -45,7 +45,6 @@ func NewKafkaConsumer() *group {
 		ready: make(chan bool),
 	}
 	go func() {
-		log.Println("in NewKafkaConsumer, run go routin")
 		for {
 			err = kafkaConsumer.client.Consume(ctx, setting.Kafkasetting.Topics, &consumer)
 			if err != nil {
@@ -62,7 +61,6 @@ func NewKafkaConsumer() *group {
 }
 
 func (g *group) GetOutput() <-chan model.KafkaData {
-	log.Println("===== consumer GetOutput func start =====")
 	if g != nil {
 		return g.out
 	}
@@ -84,7 +82,6 @@ func (consumer *consumer) Cleanup(sarama.ConsumerGroupSession) error {
 }
 
 func (consumer *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
-	// log.Println("===== consumer ConsumeClaim func start =====")
 	for message := range claim.Messages() {
 		
 		fmt.Println("\n\nkafka consumer :", string(message.Value))
