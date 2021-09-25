@@ -678,7 +678,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	path = append(path, tagLoc)
 	path = append(path, destStationLoc)
 
-	aPathLogicElement := adapter.Element{
+	droneElem := adapter.Element{
 		Elem: "drone",
 		Arg:  map[string]interface{} {
 			"nid":    "DRO" + strconv.Itoa(delivery.DroneID),
@@ -686,25 +686,25 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 			"tagidx": 1, // TODO
 		},
 	}
-	aPathLogic := adapter.Logic{
-		LogicName: "drone",
-		Elems: []adapter.Element{aPathLogicElement},
+	aDroneLogic := adapter.Logic{
+		LogicName: "drone-" + delivery.OrderNum,
+		Elems: []adapter.Element{droneElem},
 		NodeID: delivery.DroneID,
 		Node: delivery.Drone,
 	}
-	log.Println("aPathLogic = ", aPathLogic)
+	log.Println("aDroneLogic = ", aDroneLogic)
 
-	pathLogic, err := adapter.LogicToModel(&aPathLogic)
+	droneLogic, err := adapter.LogicToModel(&aDroneLogic)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err = h.ru.RegistLogic(&pathLogic)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	h.eu.CreateLogicEvent(&pathLogic)
+	// err = h.ru.RegistLogic(&droneLogic)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
+	h.eu.CreateLogicEvent(&droneLogic)
 
 	/* 도착 알람을 위한 logic 생성 및 실행 */
 	e1 := adapter.Element{
@@ -721,7 +721,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		},
 	}
 	aAlarmLogic := adapter.Logic{
-		LogicName: delivery.OrderNum,
+		LogicName: "alarm-" + delivery.OrderNum,
 		Elems: []adapter.Element{e1, e2},
 		NodeID: delivery.DroneID,
 	}
@@ -732,11 +732,11 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err = h.ru.RegistLogic(&alarmLogic)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	// err = h.ru.RegistLogic(&alarmLogic)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
 	h.eu.CreateLogicEvent(&alarmLogic)
 
 	// go h.eu.CreateDeliveryEvent(&delivery)
