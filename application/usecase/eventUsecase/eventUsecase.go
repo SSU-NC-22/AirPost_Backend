@@ -26,10 +26,8 @@ func NewEventUsecase(sir repository.SinkRepo, lsr repository.LogicServiceRepo) *
 	tick := time.NewTicker(10 * time.Second)
 	go func() {
 		for {
-			select {
-			case <-tick.C:
-				eu.CheckAndUnregistLogicServices()
-			}
+			<-tick.C
+			eu.CheckAndUnregistLogicServices()
 		}
 	}()
 	return eu
