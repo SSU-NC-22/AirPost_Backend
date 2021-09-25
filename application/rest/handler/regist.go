@@ -699,11 +699,11 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// err = h.ru.RegistLogic(&pathLogic)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	return
-	// }
+	err = h.ru.RegistLogic(&pathLogic)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	h.eu.CreateLogicEvent(&pathLogic)
 
 	/* 도착 알람을 위한 logic 생성 및 실행 */
@@ -732,11 +732,11 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	// err = h.ru.RegistLogic(&alarmLogic)
-	// if err != nil {
-	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	// 	return
-	// }
+	err = h.ru.RegistLogic(&alarmLogic)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	h.eu.CreateLogicEvent(&alarmLogic)
 
 	// go h.eu.CreateDeliveryEvent(&delivery)
