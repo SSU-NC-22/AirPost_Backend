@@ -15,7 +15,7 @@ func main() {
 	// defer conn.Close()
 
 	log.Println("success to connect to server")
-	send := `{"sid": 1, "state": [{"nid": 3, "state": true, "battery": 70, "location": [37.49304548532277, 126.96038837990257, 10]}]}`
+	send := `{"sid": 1, "state": [{"nid": 3, "state": false, "battery": 70, "location": [37.49304548532277, 126.96038837990257, 10]}]}`
 
 	_, err = conn.Write([]byte(send))
 	if err != nil {
