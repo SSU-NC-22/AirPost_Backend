@@ -36,17 +36,6 @@ func (h *Handler) CreateSink(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, addr)
-
-	// var an adapter.Node
-	// if err := c.ShouldBindJSON(&an); err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	// 	return
-	// }
-	// if err := h.evuc.CreateNode(&an, an.Sink.Name); err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	// 	return
-	// }
-	// c.JSON(http.StatusOK, an)
 }
 
 func (h *Handler) DeleteSink(c *gin.Context) {
@@ -134,7 +123,7 @@ func (h *Handler) CreateDelivery(c *gin.Context) {
 		return
 	}
 	log.Println("in CreateDelivery, ad = ", ad)
-	if err := h.evuc.CreateDelivery(&ad); err != nil { // 필요?
+	if err := h.evuc.CreateDelivery(&ad); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

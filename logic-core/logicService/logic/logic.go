@@ -95,6 +95,8 @@ func GetElementer(elem string) Elementer {
 		return &ActuatorElement{Interval: make(map[string]bool)}
 	case "drone":
 		return &DroneElement{Sent: false}
+	case "alarm":
+		return &AlarmElement{}
 	default:
 		return nil
 	}

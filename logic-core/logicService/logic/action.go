@@ -8,16 +8,16 @@ import (
 	"net/http"
 	"net/smtp"
 	"time"
+    "strings"
 
 	"github.com/eunnseo/AirPost/logic-core/adapter"
 	"github.com/eunnseo/AirPost/logic-core/domain/model"
 )
 
 const (
-	from    = "airpost@gmail.com"
-	pass    = "REDACTED"
-	bodyFmt = "node(%s)"
-	msgFmt  = "From: %s\nTo: %s\nSubject: AirPost email\n\n%s"
+	GoogleSMTPServer = "smtp.gmail.com"
+	from = "REDACTED"
+	pass = ""
 )
 
 type EmailElement struct {
@@ -36,12 +36,16 @@ func (ee *EmailElement) Exec(d *model.LogicData) {
 	if ok {
 		ee.Interval[d.Node.Name] = false
 
-		body := fmt.Sprintf(bodyFmt, d.Node.Name)
-		msg := fmt.Sprintf(msgFmt, from, ee.Email, body)
+		to := []string{ee.Email}
+		body := fmt.Sprintf("node(%s)", d.Node.Name)
+		msg := "From: " + from + "\n" +
+			"To: " + strings.Join(to, ",") + "\n" +
+			"Subject: AirPost email\n" + body
 
-		err := smtp.SendMail("smtp.gmail.com:587",
-			smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
-			from, []string{ee.Email}, []byte(msg))
+		err := smtp.SendMail(GoogleSMTPServer + ":587",
+			smtp.PlainAuth("", from, pass, GoogleSMTPServer),
+			from, to, []byte(msg))
+
 		if err != nil {
 			fmt.Printf("smtp error: %s\n", err)
 		} else {
@@ -153,4 +157,41 @@ func (de *DroneElement) Exec(d *model.LogicData) {
 		}()
 	}
 	de.BaseElement.Exec(d)
+}
+
+type AlarmElement struct {
+	BaseElement
+	Email      string `json:"email"`
+	OrderNum   string `json:"ordernum"`
+	SrcStation string `json:"src_station"`
+	DestTag    string `json:"dest_tag"`
+	SrcName    string `json:"src_name"`
+	DestName   string `json:"dest_name"`
+}
+
+func (ae *AlarmElement) Exec(d *model.LogicData) {
+	log.Println("\t\t!!!!in AlarmElement.Exec !!!!")
+
+	to := []string{ae.Email}
+	subject := "AirPost 배송 완료 - 송장번호(" + ae.OrderNum + ")"
+	body := "송장번호 : " + ae.OrderNum + "\r\n" +
+		"출발 스테이션 : " + ae.SrcStation + "\r\n" +
+		"도착 태그 : " + ae.DestTag + "\r\n" + "\r\n" +
+		ae.DestName + "님, " + ae.SrcName + "님이 발송하신 물품이 배송 완료되었습니다."
+
+	msg := "From: " + from + "\n" +
+		"To: " + strings.Join(to, ",") + "\n" +
+		"Subject: " + subject + "\n\n" + body
+
+	err := smtp.SendMail(GoogleSMTPServer + ":587",
+		smtp.PlainAuth("", from, pass, GoogleSMTPServer),
+		from, to, []byte(msg))
+
+	if err != nil {
+		log.Panicln("smtp send error: ", err)
+	} else {
+		log.Println("smtp send ok")
+	}
+
+	ae.BaseElement.Exec(d)
 }

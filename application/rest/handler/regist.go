@@ -707,6 +707,17 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	h.eu.CreateLogicEvent(&droneLogic)
 
 	/* 도착 알람을 위한 logic 생성 및 실행 */
+	src, err := h.ru.GetNodeByID(delivery.SrcStationID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	dest, err := h.ru.GetNodeByID(delivery.DestTagID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	e1 := adapter.Element{
 		Elem: "arrival",
 		Arg: map[string]interface{}{
@@ -714,10 +725,15 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		},
 	}
 	e2 := adapter.Element{
-		Elem: "email",
+		Elem: "alarm",
 		Arg: map[string]interface{}{
-			// "text": delivery.Email,
-			"text": "eunseo@q.ssu.ac.kr",
+			// "email":       delivery.Email,
+			"email":       "eunseo@q.ssu.ac.kr",
+			"ordernum":    delivery.OrderNum,
+			"src_station": src.Name,
+			"dest_tag":    dest.Name,
+			"src_name":    delivery.SrcName,
+			"dest_name":   delivery.DestName,
 		},
 	}
 	aAlarmLogic := adapter.Logic{

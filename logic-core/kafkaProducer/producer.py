@@ -7,7 +7,7 @@ producer = KafkaProducer(acks=0, compression_type='gzip', bootstrap_servers=['lo
 start = time.time()
 for i in range(1):
     data = {
-        "node_id" : "DRO2",
+        "node_id" : "DRO3",
         "values" : [1, 2, 3, 4, 5, 1], # [sensor1, sensor2, sensor3, sensor4, sensor5, done]
         "timestamp" : "2021-08-26 16:57:05"
     }
