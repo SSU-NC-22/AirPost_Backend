@@ -17,16 +17,19 @@ type Logic struct {
 	Node		model.Node		`json:"node"`
 }
 
-/*
-{
-  "aid": int,
-  "value": int,
-  "sleep": int
-}
-*/
 type Element struct {
 	Elem string                 `json:"elem"`
 	Arg  map[string]interface{} `json:"arg"`
+}
+
+type Range struct {
+	Min float64 `json:"min"`
+	Max float64 `json:"max"`
+}
+
+type Value struct {
+	Value int `json:"value"`
+	Sleep int `json:"sleep"`
 }
 
 func LogicToAdapter(ml *model.Logic) (Logic, error) {
