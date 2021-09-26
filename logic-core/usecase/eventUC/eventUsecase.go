@@ -57,8 +57,6 @@ func (eu *eventUsecase) CreateNode(n *adapter.Node, sn string) error {
 	if mn.Type == "STA" {
 		tags, _ := eu.rr.FindNodesBySinkID(TAG)
 		for _, tag := range tags {
-			log.Println("tag : ", tag.Name)
-
 			path := adapter.PathToModel(&mn, &tag)
 			pid, _ := eu.rr.CreatePath(&path)
 			if pid == -1 {
@@ -66,23 +64,17 @@ func (eu *eventUsecase) CreateNode(n *adapter.Node, sn string) error {
 				break
 			}
 			path.Pid = pid
-
-			log.Println("path : ", path)
 		}
 	} else if mn.Type == "TAG" {
 		stations, _ := eu.rr.FindNodesBySinkID(STATION)
 		for _, station := range stations {
-			log.Println("station : ", station.Name)
-			
 			path := adapter.PathToModel(&station, &mn)
 			pid, _ := eu.rr.CreatePath(&path)
 			if pid == -1 {
-				log.Println("Pid = -1")
+				// log.Println("Pid = -1")
 				break
 			}
 			path.Pid = pid
-
-			log.Println("path : ", path)
 		}
 	}
 
@@ -94,12 +86,12 @@ func (eu *eventUsecase) DeleteNode(n *adapter.Node) error {
 }
 
 func (eu *eventUsecase) CreateLogic(l *adapter.Logic) error {
-	log.Println("in eu.CreateLogic")
+	// log.Println("in eu.CreateLogic")
 	if ml, err := adapter.LogicToModel(l); err != nil {
 		return err
 	} else {
-		log.Println("in eu.CreateLogic.good")
-		log.Println("model.Logic : ", ml)
+		// log.Println("in eu.CreateLogic.good")
+		// log.Println("model.Logic : ", ml)
 		return eu.ls.CreateAndStartLogic(&ml)
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sync"
 	"time"
-	"log"
 
 	"github.com/eunnseo/AirPost/application/domain/model"
 	"github.com/eunnseo/AirPost/application/domain/repository"
@@ -116,7 +115,6 @@ func (pr *pingRequest) ping() error {
 /* sink event usecase                                         */
 /**************************************************************/
 func (eu *eventUsecase) PostToSink(sid int) error {
-	log.Println("\t===== eventUsecase PostToSink start =====")
 	if sink, err := eu.sir.FindByIDWithNodesSensorsValuesTopic(sid); err != nil {
 		return err
 	} else {

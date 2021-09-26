@@ -30,7 +30,6 @@ func KafkaToModel(d *KafkaData) (model.KafkaData, error) {
 		log.Println("Error in KafkaToModel from ParseInLocation")
 		return model.KafkaData{}, err
 	}
-	log.Println("Success KafkaToModel")
 
 	nodeType := d.NodeID[:3]
 	nodeID, err := strconv.Atoi(d.NodeID[3:])
@@ -38,7 +37,6 @@ func KafkaToModel(d *KafkaData) (model.KafkaData, error) {
 		log.Println("Error in KafkaToModel from strconv.Atoi")
 		return model.KafkaData{}, err
 	}
-	log.Println("nodeID = ", nodeID)
 
 	return model.KafkaData{
 		NodeType:  nodeType,

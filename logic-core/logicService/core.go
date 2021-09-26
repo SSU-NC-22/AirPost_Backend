@@ -26,7 +26,6 @@ func NewLogicService() *logicService {
 }
 
 func (m *mux) CreateAndStartLogic(l *model.Logic) error {
-	log.Println("===== core CreateAndStartLogic start =====")
 	listen := make(chan model.LogicData, 100)
 	
 	lchs, ok := m.chTable[l.NodeID]
