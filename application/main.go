@@ -83,6 +83,7 @@ func setRegistrationRoute(r *gin.Engine, h *handler.Handler) {
 			node.GET("", h.ListNodes)
 			node.GET("/:sinkid", h.ListNodesBySink)
 			node.POST("", h.RegistNode)
+			node.POST("/update", h.UpdateNodeLoc)
 			node.DELETE("/:id", h.UnregistNode)
 		}
 		logic := regist.Group("/logic")

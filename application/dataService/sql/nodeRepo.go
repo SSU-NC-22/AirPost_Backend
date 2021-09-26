@@ -61,7 +61,10 @@ func (ndr *nodeRepo) FindsByID(id int) (*model.Node, error) {
 
 func (ndr *nodeRepo) Create(n *model.Node) error {
 	return ndr.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Omit("SensorValues").Omit("Logics").Create(n).Error; err != nil {
+		for i := range n.SensorValues {
+			n.SensorValues[i].Index = i
+		}
+		if err := tx.Omit("Logics").Create(n).Error; err != nil {
 			return err
 		}
 		sv := n.SensorValues
@@ -75,4 +78,8 @@ func (ndr *nodeRepo) Create(n *model.Node) error {
 
 func (ndr *nodeRepo) Delete(n *model.Node) error {
 	return ndr.db.Delete(n).Error
+}
+
+func (ndr *nodeRepo) UpdateNodeLoc(n *model.Node, loc *adapter.Location) error {
+	return ndr.db.Model(n).Where("id=?", n.ID).Updates(model.Node{LocLat: loc.Lat, LocLon: loc.Lon, LocAlt: loc.Alt}).Error
 }

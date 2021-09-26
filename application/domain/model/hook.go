@@ -21,7 +21,7 @@ func (s *Sink) BeforeDelete(tx *gorm.DB) (err error) {
 
 // node
 func (n *Node) AfterCreate(tx *gorm.DB) (err error) {
-	return tx.Preload("Sink.Topic").Preload("Sink").Preload("Logics").Find(n).Error
+	return tx.Preload("Sink.Topic").Preload("Sink").Preload("Logics").Preload("SensorValues", orderByASC).Find(n).Error
 }
 
 func (n *Node) BeforeDelete(tx *gorm.DB) (err error) {

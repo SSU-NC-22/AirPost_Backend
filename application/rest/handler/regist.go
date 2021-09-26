@@ -240,7 +240,6 @@ func (h *Handler) RegistNode(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		log.Println("Regist drone node : ", node)
 
 		// drone 등록 시 station_drone 추가
 		sd := model.StationDrone{
@@ -254,7 +253,34 @@ func (h *Handler) RegistNode(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		log.Println("Regist station_drone : ", sd)
+
+		// drone 이동할때마다 위치 업데이트하는 logic 생성 및 실행
+		movingElem := adapter.Element{
+			Elem: "moving",
+			Arg: map[string]interface{} {
+				"nid": node.ID,
+			},
+		}
+		aMovingLogic := adapter.Logic{
+			LogicName: "moving-" + strconv.Itoa(node.ID),
+			Elems: []adapter.Element{movingElem},
+			NodeID: node.ID,
+			Node: node,
+		}
+
+		movingLogic, err := adapter.LogicToModel(&aMovingLogic)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		err = h.ru.RegistLogic(&movingLogic)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		log.Println("Create moving logic : ", movingLogic)
+		h.eu.CreateLogicEvent(&movingLogic)
+
 	} else if node.Type[:3] == "STA" {
 		err := h.ru.RegistNode(&node)
 		if err != nil {
@@ -461,6 +487,29 @@ func (h *Handler) UnregistNode(c *gin.Context) {
 	h.eu.DeleteNodeEvent(node)
 	go h.eu.PostToSink(node.SinkID)
 	c.JSON(http.StatusOK, node)
+}
+
+func (h *Handler) UpdateNodeLoc(c *gin.Context) {
+	var new struct{
+		Nid      int              `json:"nid"`
+		Location adapter.Location `json:"location"`
+	}
+	if err := c.ShouldBindJSON(&new); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	node, err := h.ru.GetNodeByID(new.Nid)
+	// log.Println("node = ", node)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.ru.UpdateNodeLoc(node, &new.Location); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, new)
 }
 
 /**************************************************************/
@@ -871,8 +920,12 @@ func (h *Handler) GetTracking(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
 	dest, err := h.ru.GetNodeByID(delivery.DestTagID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	drone, err := h.ru.GetNodeByID(delivery.DroneID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -884,8 +937,8 @@ func (h *Handler) GetTracking(c *gin.Context) {
 		SrcLng:	  src.LocLon,
 		DestLat:  dest.LocLat,
 		DestLng:  dest.LocLon,
-		DroneLat: 0,
-		DroneLng: 0,
+		DroneLat: drone.LocLat,
+		DroneLng: drone.LocLon,
 	}
 	log.Println("tracking : ", tracking)
 
