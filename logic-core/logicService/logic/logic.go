@@ -95,6 +95,8 @@ func GetElementer(elem string) Elementer {
 		return &DroneElement{Sent: false}
 	case "alarm":
 		return &AlarmElement{}
+	case "moving":
+		return &MovingElement{}
 	default:
 		return nil
 	}

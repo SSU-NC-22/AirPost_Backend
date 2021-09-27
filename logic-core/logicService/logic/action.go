@@ -7,11 +7,13 @@ import (
 	"log"
 	"net/http"
 	"net/smtp"
+	"strconv"
+	"strings"
 	"time"
-    "strings"
 
 	"github.com/eunnseo/AirPost/logic-core/adapter"
 	"github.com/eunnseo/AirPost/logic-core/domain/model"
+	"github.com/eunnseo/AirPost/logic-core/setting"
 )
 
 const (
@@ -27,7 +29,7 @@ type EmailElement struct {
 }
 
 func (ee *EmailElement) Exec(d *model.LogicData) {
-	log.Println("\t\t!!!!in EmailElement.Exec !!!!")
+	log.Println("\t!!!!in EmailElement.Exec !!!!")
 	ok, exist := ee.Interval[d.Node.Name]
 
 	if !exist {
@@ -64,7 +66,7 @@ func (ee *EmailElement) Exec(d *model.LogicData) {
 
 type ActuatorElement struct {
 	BaseElement
-	Aid    int `json:"aid"`
+	Name   string `json:"name"`
 	Values []struct {
 		Value int `json:"value"`
 		Sleep int `json:"sleep"`
@@ -73,16 +75,16 @@ type ActuatorElement struct {
 }
 
 type Actuator struct {
-	Nid    int `json:"nid"`	// node id
-	Aid    int `json:"aid"` // actuator id
-	Values []struct {		// action values
+	Nid    string `json:"nid"`  // node id
+	Name   string `json:"name"` // actuator name
+	Values []struct {           // action values
 		Value int `json:"value"`
 		Sleep int `json:"sleep"`
 	} `json:"values"`
 }
 
 func (ae *ActuatorElement) Exec(d *model.LogicData) {
-	log.Println("!!!!in ActuatorElement.Exec !!!!")
+	log.Println("\t!!!!in ActuatorElement.Exec !!!!")
 	ok, exist := ae.Interval[d.Node.Name]
 	if !exist {
 		ae.Interval[d.Node.Name] = true
@@ -92,11 +94,10 @@ func (ae *ActuatorElement) Exec(d *model.LogicData) {
 		go func() {
 			
 			res := Actuator{
-				Nid:    d.Node.Nid,
-				Aid:    ae.Aid,
+				Nid:    "STA" + strconv.Itoa(d.Node.Nid),
+				Name:   ae.Name,
 				Values: ae.Values,
 			}
-			log.Println("in ActuatorElement.Exec, res = ", res)
 					
 			pbytes, _ := json.Marshal(res)
 			buff := bytes.NewBuffer(pbytes)
@@ -109,7 +110,7 @@ func (ae *ActuatorElement) Exec(d *model.LogicData) {
 			defer resp.Body.Close()
 		}()
 		
-		tick := time.NewTicker(30 * time.Second)
+		tick := time.NewTicker(1 * time.Second)
 		go func() {
 			<-tick.C
 			ae.Interval[d.Node.Name] = true
@@ -133,17 +134,21 @@ type DroneElement struct {
 }
 
 func (de *DroneElement) Exec(d *model.LogicData) {
-	log.Println("\t\t!!!!in DroneElement.Exec !!!!")
+	log.Println("\t!!!!in DroneElement.Exec !!!!")
 			
 	if !de.Sent {
 		de.Sent = true
 		go func() {
+			tmp1 := []float64{0, 0, 1, 22}
+			tmp2 := []float64{37.5177864, 126.8786726, 1, 16}
+			tmp3 := []float64{37.5176900, 126.8787400, 0, 21}
+			tmp4 := [][]float64{}
+			tmp4 = append(tmp4, tmp1, tmp2, tmp3)
 			res := Drone{
-				Nid:    de.Nid,
-				Values: de.Values,
-				Tagidx: de.Tagidx,
+				Nid:    "DRO0",
+				Values: tmp4,
+				Tagidx: 1,
 			}
-			log.Println("\t\tin DroneElement.Exec, res = ", res)
 					
 			pbytes, _ := json.Marshal(res)
 			buff := bytes.NewBuffer(pbytes)
@@ -159,7 +164,7 @@ func (de *DroneElement) Exec(d *model.LogicData) {
 	de.BaseElement.Exec(d)
 }
 
-type AlarmElement struct {
+type AlarmElement struct { // 도착 알림을 위한 action
 	BaseElement
 	Email      string `json:"email"`
 	OrderNum   string `json:"ordernum"`
@@ -170,7 +175,7 @@ type AlarmElement struct {
 }
 
 func (ae *AlarmElement) Exec(d *model.LogicData) {
-	log.Println("\t\t!!!!in AlarmElement.Exec !!!!")
+	log.Println("\t!!!!in AlarmElement.Exec !!!!")
 
 	to := []string{ae.Email}
 	subject := "AirPost 배송 완료 - 송장번호(" + ae.OrderNum + ")"
@@ -194,4 +199,44 @@ func (ae *AlarmElement) Exec(d *model.LogicData) {
 	}
 
 	ae.BaseElement.Exec(d)
+}
+
+type MovingElement struct { // 데이터베이스에 드론 위치를 동기화시키기 위한 action
+	BaseElement
+	Nid int `json:"nid"`
+}
+
+type Moving struct {
+	Nid int `json:"nid"` // drone node id
+	Location struct {
+		Lat float64 `json:"lat"`
+		Lon float64 `json:"lon"`
+		Alt float64 `json:"alt"`
+	} `json:"location"`
+}
+
+func (me *MovingElement) Exec(d *model.LogicData) {
+	log.Println("\t!!!!in TrackingElement.Exec !!!!")
+			
+	go func() {
+		res := Moving{
+			Nid:      me.Nid,
+			Location: struct{Lat float64 "json:\"lat\""; Lon float64 "json:\"lon\""; Alt float64 "json:\"alt\""}{
+				Lat: d.Values["lat"],
+				Lon: d.Values["long"],
+				Alt: d.Values["alt"],
+			},
+		}
+				
+		pbytes, _ := json.Marshal(res)
+		buff := bytes.NewBuffer(pbytes)
+		log.Println("in Tracking.Exec, 받는 주소: " + "http://" + setting.Appsetting.Server + "/regist/node/update" + " 전달내용: " + string(pbytes))
+		resp, err := http.Post("http://"+setting.Appsetting.Server+"/regist/node/update", "application/json", buff)
+		if err != nil {
+			panic(err)
+		}
+		defer resp.Body.Close()
+	}()
+
+	me.BaseElement.Exec(d)
 }
