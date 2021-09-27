@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -172,7 +170,6 @@ func (h *Handler) ListNodes(c *gin.Context) {
 		if page.Page == 1 {
 			pages = h.ru.GetNodePageCount(page)
 		}
-		fmt.Println(nodes)
 		c.JSON(http.StatusOK, gin.H{"nodes": nodes, "pages": pages})
 		return
 	} else if c.Bind((&square)); square.IsBinded() {
@@ -220,7 +217,6 @@ func (h *Handler) ListNodesBySink(c *gin.Context) {
 // @Success 200 {object} model.Node "include sink, sink.topic, sensors, sensors.logics info"
 // @Router /regist/node [post]
 func (h *Handler) RegistNode(c *gin.Context) {
-	// log.Println("===== handler RegistNode func start =====")
 	var node model.Node
 	if err := c.ShouldBindJSON(&node); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -278,7 +274,6 @@ func (h *Handler) RegistNode(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		log.Println("Create moving logic : ", movingLogic)
 		h.eu.CreateLogicEvent(&movingLogic)
 
 	} else if node.Type[:3] == "STA" {
@@ -287,7 +282,6 @@ func (h *Handler) RegistNode(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		log.Println("Regist station node : ", node)
 
 		// regist night LED logic
 		night := adapter.Range{Max: 512, Min: 0}
@@ -326,7 +320,6 @@ func (h *Handler) RegistNode(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		log.Println("Regist nightLedLogic : ", nightLedLogic)
 		h.eu.CreateLogicEvent(&nightLedLogic)
 
 		// regist day LED logic
@@ -366,7 +359,6 @@ func (h *Handler) RegistNode(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		log.Println("Regist dayLedLogic : ", dayLedLogic)
 		h.eu.CreateLogicEvent(&dayLedLogic)
 
 		// regist path between station and tag
@@ -406,7 +398,6 @@ func (h *Handler) RegistNode(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
-			log.Println("Regist path : ", path)
 		}
 		// resp.Body.Close()		
 	} else if node.Type[:3] == "TAG" {
@@ -415,7 +406,6 @@ func (h *Handler) RegistNode(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		log.Println("Regist tag node : ", node)
 
 		// regist path between station and tag
 		stations, err := h.ru.GetNodesBySinkID(STATION)
@@ -439,7 +429,6 @@ func (h *Handler) RegistNode(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
 			}
-			log.Println("Regist path : ", path)
 		}
 	}
 
@@ -500,7 +489,6 @@ func (h *Handler) UpdateNodeLoc(c *gin.Context) {
 	}
 
 	node, err := h.ru.GetNodeByID(new.Nid)
-	// log.Println("node = ", node)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -716,7 +704,6 @@ func (h *Handler) UnregistTopic(c *gin.Context) {
 // @Success 200 {object} model.Delivery
 // @Router /regist/delivery [post]
 func (h *Handler) RegistDelivery(c *gin.Context) {
-	// log.Println("===== handler RegistDelivery func start =====")
 	var delivery model.Delivery
 	delivery.CreatedAt = time.Now()
 
@@ -743,7 +730,6 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	// log.Println("droneid = ", droneid)
 
 	// Regist Delivery with DroneID and Drone
 	drone, err := h.ru.GetNodeByID(droneid)
@@ -753,14 +739,12 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	}
 	delivery.Drone = *drone
 	delivery.DroneID = droneid
-	// log.Println("delivery : ", delivery)
 
 	err = h.ru.RegistDelivery(&delivery)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	// log.Println("Regist delivery : ", delivery)
 
 	// destTag와 가장 가까운 destStation을 정함
 	destStation, err := h.ru.GetShortestPathStation(delivery.DestTagID)
@@ -837,7 +821,6 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	// 	return
 	// }
-	// log.Println("Create drone logic : ", droneLogic)
 	h.eu.CreateLogicEvent(&droneLogic)
 
 	/* 도착 알람을 위한 logic 생성 및 실행 */
@@ -874,7 +857,6 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	// 	return
 	// }
-	// log.Println("Create alarm logic : ", alarmLogic)
 	h.eu.CreateLogicEvent(&alarmLogic)
 
 	// go h.eu.CreateDeliveryEvent(&delivery)
@@ -901,7 +883,6 @@ func (h *Handler) GetDroneID(c *gin.Context) {
 /* Tracking service handler                                   */
 /**************************************************************/
 func (h *Handler) GetTracking(c *gin.Context) {
-	log.Println("===== handler GetTracking func start =====")
 	ordernum, err := strconv.Atoi(c.Param("orderNum"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -913,7 +894,6 @@ func (h *Handler) GetTracking(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	log.Println("delivery : ", delivery)
 
 	src, err := h.ru.GetNodeByID(delivery.SrcStationID)
 	if err != nil {
@@ -940,7 +920,5 @@ func (h *Handler) GetTracking(c *gin.Context) {
 		DroneLat: drone.LocLat,
 		DroneLng: drone.LocLon,
 	}
-	log.Println("tracking : ", tracking)
-
 	c.JSON(http.StatusOK, tracking)
 }

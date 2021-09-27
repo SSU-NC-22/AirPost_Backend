@@ -98,7 +98,6 @@ func NewElasticClient() *client {
 }
 
 func (ec *client) run() {
-	// log.Println("in NewElasticClient, run go routin")
 	for {
 		select {
 		case doc := <-ec.in:

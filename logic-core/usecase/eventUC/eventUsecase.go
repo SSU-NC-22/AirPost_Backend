@@ -71,7 +71,7 @@ func (eu *eventUsecase) CreateNode(n *adapter.Node, sn string) error {
 			path := adapter.PathToModel(&station, &mn)
 			pid, _ := eu.rr.CreatePath(&path)
 			if pid == -1 {
-				// log.Println("Pid = -1")
+				log.Println("Pid = -1")
 				break
 			}
 			path.Pid = pid
@@ -86,12 +86,9 @@ func (eu *eventUsecase) DeleteNode(n *adapter.Node) error {
 }
 
 func (eu *eventUsecase) CreateLogic(l *adapter.Logic) error {
-	// log.Println("in eu.CreateLogic")
 	if ml, err := adapter.LogicToModel(l); err != nil {
 		return err
 	} else {
-		// log.Println("in eu.CreateLogic.good")
-		// log.Println("model.Logic : ", ml)
 		return eu.ls.CreateAndStartLogic(&ml)
 	}
 }

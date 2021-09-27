@@ -139,14 +139,9 @@ func (de *DroneElement) Exec(d *model.LogicData) {
 	if !de.Sent {
 		de.Sent = true
 		go func() {
-			tmp1 := []float64{0, 0, 1, 22}
-			tmp2 := []float64{37.5177864, 126.8786726, 1, 16}
-			tmp3 := []float64{37.5176900, 126.8787400, 0, 21}
-			tmp4 := [][]float64{}
-			tmp4 = append(tmp4, tmp1, tmp2, tmp3)
 			res := Drone{
 				Nid:    "DRO0",
-				Values: tmp4,
+				Values: de.Values,
 				Tagidx: 1,
 			}
 					

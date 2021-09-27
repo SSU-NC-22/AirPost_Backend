@@ -31,14 +31,11 @@ func NewLogicCoreUsecase(rr repository.RegistRepo,
 
 	go func() {
 		for rawData := range in {
-			// log.Println("in NewLogicCoreUsecase, run go routin")
 
 			ld, err := lcu.ToLogicData(&rawData) // 데이터 보강
 			if err != nil {
-				log.Println("Error in NewLogicCoreUsecase in ToLogicData")
 				continue
 			}
-			// log.Println("in NewLogicCoreUsecase, ld(LogicData) = ", ld)
 
 			lchs, err := lcu.ls.GetLogicChans(ld.NodeID)
 			if err != nil {

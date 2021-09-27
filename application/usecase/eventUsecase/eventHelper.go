@@ -21,16 +21,18 @@ func init() {
 }
 
 // ping response - unused
-// func ping(l model.LogicService) error {
-// 	path := "/ping"
-// 	url := makeUrl(l.Addr, path)
+/*
+func ping(l model.LogicService) error {
+	path := "/ping"
+	url := makeUrl(l.Addr, path)
 
-// 	resp, _ := pingClient.R().Get(url) // GET
-// 	if resp.IsSuccess() {
-// 		return nil
-// 	}
-// 	return fmt.Errorf("%s response error : %d", l.Addr, resp.StatusCode())
-// }
+	resp, _ := pingClient.R().Get(url) // GET
+	if resp.IsSuccess() {
+		return nil
+	}
+	return fmt.Errorf("%s response error : %d", l.Addr, resp.StatusCode())
+}
+*/
 
 func makeUrl(addr, path string) string {
 	return fmt.Sprintf("http://%s%s", addr, path)
