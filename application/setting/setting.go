@@ -30,7 +30,7 @@ type App struct {
 func (as *App) Getenv() {
 	as.Server = os.Getenv("APP_SERVER")
 	if as.Server == "" {
-		as.Server = "192.168.0.18:8081"
+		as.Server = "0.0.0.0:8081"
 	}
 }
 
@@ -108,7 +108,7 @@ func (ss *DroneSink) Getenv() {
 	}
 	ss.Addr = os.Getenv("SINK_ADDR")
 	if ss.Addr == "" {
-		ss.Addr = "192.168.0.18:5000"
+		ss.Addr = "0.0.0.0:5000"
 	}
 	GetenvInt(&ss.TopicID, 1, "SINK_TOPICID")
 }
@@ -128,7 +128,7 @@ func (ss *StationSink) Getenv() {
 	}
 	ss.Addr = os.Getenv("SINK_ADDR")
 	if ss.Addr == "" {
-		ss.Addr = "192.168.0.18:5000"
+		ss.Addr = "0.0.0.0:5000"
 	}
 	GetenvInt(&ss.TopicID, 1, "SINK_TOPICID")
 }
@@ -148,7 +148,7 @@ func (ss *TagSink) Getenv() {
 	}
 	ss.Addr = os.Getenv("SINK_ADDR")
 	if ss.Addr == "" {
-		ss.Addr = "192.168.0.18:5000"
+		ss.Addr = "0.0.0.0:5000"
 	}
 	GetenvInt(&ss.TopicID, 1, "SINK_TOPICID")
 }
