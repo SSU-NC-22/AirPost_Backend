@@ -42,7 +42,6 @@ func NewHealthCheckUsecase(sr repository.StatusRepo, e chan interface{}) *health
 }
 
 func (hu *healthCheckUsecase) healthCheck(conn net.Conn) {
-	log.Println("===== healthCheck start =====")
 
 	// for {
 	recvBuf := make([]byte, 4096)
@@ -64,9 +63,9 @@ func (hu *healthCheckUsecase) healthCheck(conn net.Conn) {
 
 		states.State = healthInfo
 		states.Timestamp = fmt.Sprint(time.Now().Unix())
-		log.Println("convert to json, healthInfo :", healthInfo)
+		// log.Println("convert to json, healthInfo :", healthInfo)
 		tmphealth := hu.sr.UpdateTable(states) // 변화가 생긴 것들만 뭘로 변했는지 알려줌 ex : {1 [{1 1} {2 1} {8 0}]}
-		log.Println("change occurred, healthInfo.state :", tmphealth)
+		// log.Println("change occurred, healthInfo.state :", tmphealth)
 
 		hu.event <- tmphealth // go to wu.event in NewWebsocketUsecase websocketUsecase.go
 	}

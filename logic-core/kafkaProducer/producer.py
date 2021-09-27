@@ -8,10 +8,13 @@ start = time.time()
 for i in range(1):
     data = {
         "node_id" : "DRO3",
-        "values" : [1, 2, 3, 4, 5, 1], # [sensor1, sensor2, sensor3, sensor4, sensor5, done]
-        "timestamp" : "2021-08-26 16:57:05"
+        "values" : [37.5176341, 126.8785336, 0, 0, 80, 0], # drone: [lat, long, alt, velocity, batteryPer, done]
+        # "values" : [37.517684, 126.8786976, 0, 0, 75, 1], # drone: [lat, long, alt, velocity, batteryPer, done]
+        "timestamp" : "2021-09-24 18:09:34"
     }
     print("publish: ", type(data), data, "\n")
     producer.send('sensor-data', value=data) # topic name: sensor-data, value: data
     producer.flush()
 print("elapsed :", time.time() - start)
+
+# station: [temperature, humidity, light, lat, long, alt]

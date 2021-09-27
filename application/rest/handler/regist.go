@@ -716,7 +716,7 @@ func (h *Handler) UnregistTopic(c *gin.Context) {
 // @Success 200 {object} model.Delivery
 // @Router /regist/delivery [post]
 func (h *Handler) RegistDelivery(c *gin.Context) {
-	log.Println("===== handler RegistDelivery func start =====")
+	// log.Println("===== handler RegistDelivery func start =====")
 	var delivery model.Delivery
 	delivery.CreatedAt = time.Now()
 
@@ -743,7 +743,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	log.Println("droneid = ", droneid)
+	// log.Println("droneid = ", droneid)
 
 	// Regist Delivery with DroneID and Drone
 	drone, err := h.ru.GetNodeByID(droneid)
@@ -753,14 +753,14 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	}
 	delivery.Drone = *drone
 	delivery.DroneID = droneid
-	log.Println("delivery : ", delivery)
+	// log.Println("delivery : ", delivery)
 
 	err = h.ru.RegistDelivery(&delivery)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	log.Println("Regist delivery : ", delivery)
+	// log.Println("Regist delivery : ", delivery)
 
 	// destTag와 가장 가까운 destStation을 정함
 	destStation, err := h.ru.GetShortestPathStation(delivery.DestTagID)
@@ -837,7 +837,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	// 	return
 	// }
-	log.Println("Create drone logic : ", droneLogic)
+	// log.Println("Create drone logic : ", droneLogic)
 	h.eu.CreateLogicEvent(&droneLogic)
 
 	/* 도착 알람을 위한 logic 생성 및 실행 */
@@ -874,7 +874,7 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	// 	return
 	// }
-	log.Println("Create alarm logic : ", alarmLogic)
+	// log.Println("Create alarm logic : ", alarmLogic)
 	h.eu.CreateLogicEvent(&alarmLogic)
 
 	// go h.eu.CreateDeliveryEvent(&delivery)
