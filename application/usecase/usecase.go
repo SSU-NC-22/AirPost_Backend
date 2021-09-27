@@ -23,6 +23,7 @@ type RegistUsecase interface {
 	GetNodeByID(id int) (*model.Node, error)
 	RegistNode(n *model.Node) error
 	UnregistNode(n *model.Node) error
+	UpdateNodeLoc(n *model.Node, loc *adapter.Location) error
 
 	GetLogics() ([]model.Logic, error)
 	RegistLogic(l *model.Logic) error

@@ -12,21 +12,24 @@ import (
 type Logic struct {
 	ID        	int				`json:"id"`
 	LogicName	string       	`json:"logic_name"`
-	Elems     	[]Element    	`json:"elems"` // 엘렘 배열 , value time email 중 선택한거 드가있음
+	Elems     	[]Element    	`json:"elems"`
 	NodeID		int				`json:"node_id"`
 	Node		model.Node		`json:"node"`
 }
 
-/*
-{
-  "aid": int,
-  "value": int,
-  "sleep": int
-}
-*/
 type Element struct {
-	Elem string                 `json:"elem"` //value time email 중 선택한거
-	Arg  map[string]interface{} `json:"arg"`  //거기에 맞는 A
+	Elem string                 `json:"elem"`
+	Arg  map[string]interface{} `json:"arg"`
+}
+
+type Range struct {
+	Min float64 `json:"min"`
+	Max float64 `json:"max"`
+}
+
+type Value struct {
+	Value int `json:"value"`
+	Sleep int `json:"sleep"`
 }
 
 func LogicToAdapter(ml *model.Logic) (Logic, error) {

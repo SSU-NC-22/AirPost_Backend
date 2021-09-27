@@ -78,8 +78,6 @@ func (ae *ArrivalElement) Exec(d *model.LogicData) {
 	}
 	isArrived := false
 
-	log.Println("ae.Done = ", ae.Done)
-	log.Println("done = ", done)
 	if ae.Done == done {
 		isArrived = true
 	}

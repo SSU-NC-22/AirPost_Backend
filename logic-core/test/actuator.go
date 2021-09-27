@@ -8,14 +8,6 @@ import (
 	"time"
 )
 
-// type Drone struct {
-// 	Nid    string `json:"nid"`	// node id
-// 	Values struct {		// action values
-// 		WP0 [][]float64 `json:"wp0"` // weigh point 0 (start station -> dest tag path)
-// 		WP1 [][]float64 `json:"wp1"` // weigh point 1 (dest tag -> nearby station path)
-// 	} `json:"values"`
-// }
-
 type Drone struct {
 	Nid    string `json:"nid"`	// node id
 	Values [][]float64 `json:"values"`
@@ -33,11 +25,6 @@ func main() {
 		srcStation := []float64{37.497365670723944, 126.95591909983503, 1, 22} // lat, lon, alt, 명령(22: 이륙)
 		tag := []float64{37.49719755738831, 126.95590032437323, 1, 16} // lat, lon, alt, 명령(16: 이동)
 		destStation := []float64{37.4971933013496, 126.95619804955307, 0, 21} // lat, lon, alt, 명령(21: 착륙)
-
-		// res.Values.WP0 = append(res.Values.WP0, srcStation)
-		// res.Values.WP0 = append(res.Values.WP0, tag)
-		// res.Values.WP1 = append(res.Values.WP1, tag)
-		// res.Values.WP1 = append(res.Values.WP1, destStation)
 
 		res.Values = append(res.Values, srcStation)
 		res.Values = append(res.Values, tag)

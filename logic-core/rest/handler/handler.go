@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/eunnseo/AirPost/logic-core/adapter"
@@ -26,7 +25,6 @@ func NewHandler(evuc usecase.EventUsecase, lcuc usecase.LogicCoreUsecase) *Handl
 /**************************************************************/
 func (h *Handler) CreateSink(c *gin.Context) {
 	var addr adapter.SinkAddr
-	log.Println("in CreateSink")
 	if err := c.ShouldBindJSON(&addr); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -36,17 +34,6 @@ func (h *Handler) CreateSink(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, addr)
-
-	// var an adapter.Node
-	// if err := c.ShouldBindJSON(&an); err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	// 	return
-	// }
-	// if err := h.evuc.CreateNode(&an, an.Sink.Name); err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	// 	return
-	// }
-	// c.JSON(http.StatusOK, an)
 }
 
 func (h *Handler) DeleteSink(c *gin.Context) {
@@ -95,14 +82,12 @@ func (h *Handler) DeleteNode(c *gin.Context) {
 /* Logic handler                                              */
 /**************************************************************/
 func (h *Handler) CreateLogic(c *gin.Context) {
-	log.Println("===== CreateLogic handler start =====")
 	var al adapter.Logic
 
 	if err := c.ShouldBindJSON(&al); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	log.Println("in h.createLogic, logic = ", al)
 	if err := h.evuc.CreateLogic(&al); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -127,14 +112,12 @@ func (h *Handler) DeleteLogic(c *gin.Context) {
 /* Delivery handler                                           */
 /**************************************************************/
 func (h *Handler) CreateDelivery(c *gin.Context) {
-	log.Println("===== CreateDelivery handler start =====")
 	var ad adapter.Delivery
 	if err := c.ShouldBindJSON(&ad); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	log.Println("in CreateDelivery, ad = ", ad)
-	if err := h.evuc.CreateDelivery(&ad); err != nil { // 필요?
+	if err := h.evuc.CreateDelivery(&ad); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}

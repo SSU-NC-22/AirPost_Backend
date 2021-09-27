@@ -9,7 +9,6 @@ import (
 )
 
 func waitRespGroup(e EVENT, body interface{}, ll []model.LogicService) (prl []pingRequest) {
-	log.Println("\t===== event waitRespGroup start =====")
 	var wg sync.WaitGroup // 고루틴이 종료될 때까지 대기
 	for _, l := range ll {
 		wg.Add(1) // WaitGroup에 대기 중인 고루틴 개수 추가
@@ -117,7 +116,6 @@ func (eu *eventUsecase) DeleteLogicEvent(l *model.Logic) error {
 /* delivery event usecase                                     */
 /**************************************************************/
 func (eu *eventUsecase) CreateDeliveryEvent(d *model.Delivery) error {
-	log.Println("\t===== event CreateDeliveryEvent start =====")
 	e := CreateDelivery
 
 	s, _ := eu.sir.FindByIDWithNodesSensorsValuesTopic(d.Drone.SinkID)

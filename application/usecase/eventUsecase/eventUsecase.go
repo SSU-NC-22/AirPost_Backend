@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sync"
 	"time"
-	"log"
 
 	"github.com/eunnseo/AirPost/application/domain/model"
 	"github.com/eunnseo/AirPost/application/domain/repository"
@@ -26,10 +25,8 @@ func NewEventUsecase(sir repository.SinkRepo, lsr repository.LogicServiceRepo) *
 	tick := time.NewTicker(10 * time.Second)
 	go func() {
 		for {
-			select {
-			case <-tick.C:
-				eu.CheckAndUnregistLogicServices()
-			}
+			<-tick.C
+			eu.CheckAndUnregistLogicServices()
 		}
 	}()
 	return eu
@@ -118,7 +115,6 @@ func (pr *pingRequest) ping() error {
 /* sink event usecase                                         */
 /**************************************************************/
 func (eu *eventUsecase) PostToSink(sid int) error {
-	log.Println("\t===== eventUsecase PostToSink start =====")
 	if sink, err := eu.sir.FindByIDWithNodesSensorsValuesTopic(sid); err != nil {
 		return err
 	} else {

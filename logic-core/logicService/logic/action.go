@@ -7,17 +7,19 @@ import (
 	"log"
 	"net/http"
 	"net/smtp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/eunnseo/AirPost/logic-core/adapter"
 	"github.com/eunnseo/AirPost/logic-core/domain/model"
+	"github.com/eunnseo/AirPost/logic-core/setting"
 )
 
 const (
-	from    = "airpost@gmail.com"
-	pass    = "REDACTED"
-	bodyFmt = "node(%s)"
-	msgFmt  = "From: %s\nTo: %s\nSubject: AirPost email\n\n%s"
+	GoogleSMTPServer = "smtp.gmail.com"
+	from = "REDACTED"
+	pass = ""
 )
 
 type EmailElement struct {
@@ -27,7 +29,7 @@ type EmailElement struct {
 }
 
 func (ee *EmailElement) Exec(d *model.LogicData) {
-	log.Println("\t\t!!!!in EmailElement.Exec !!!!")
+	log.Println("\t!!!!in EmailElement.Exec !!!!")
 	ok, exist := ee.Interval[d.Node.Name]
 
 	if !exist {
@@ -36,12 +38,16 @@ func (ee *EmailElement) Exec(d *model.LogicData) {
 	if ok {
 		ee.Interval[d.Node.Name] = false
 
-		body := fmt.Sprintf(bodyFmt, d.Node.Name)
-		msg := fmt.Sprintf(msgFmt, from, ee.Email, body)
+		to := []string{ee.Email}
+		body := fmt.Sprintf("node(%s)", d.Node.Name)
+		msg := "From: " + from + "\n" +
+			"To: " + strings.Join(to, ",") + "\n" +
+			"Subject: AirPost email\n" + body
 
-		err := smtp.SendMail("smtp.gmail.com:587",
-			smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
-			from, []string{ee.Email}, []byte(msg))
+		err := smtp.SendMail(GoogleSMTPServer + ":587",
+			smtp.PlainAuth("", from, pass, GoogleSMTPServer),
+			from, to, []byte(msg))
+
 		if err != nil {
 			fmt.Printf("smtp error: %s\n", err)
 		} else {
@@ -60,7 +66,7 @@ func (ee *EmailElement) Exec(d *model.LogicData) {
 
 type ActuatorElement struct {
 	BaseElement
-	Aid    int `json:"aid"`
+	Name   string `json:"name"`
 	Values []struct {
 		Value int `json:"value"`
 		Sleep int `json:"sleep"`
@@ -69,16 +75,16 @@ type ActuatorElement struct {
 }
 
 type Actuator struct {
-	Nid    int `json:"nid"`	// node id
-	Aid    int `json:"aid"` // actuator id
-	Values []struct {		// action values
+	Nid    string `json:"nid"`  // node id
+	Name   string `json:"name"` // actuator name
+	Values []struct {           // action values
 		Value int `json:"value"`
 		Sleep int `json:"sleep"`
 	} `json:"values"`
 }
 
 func (ae *ActuatorElement) Exec(d *model.LogicData) {
-	log.Println("!!!!in ActuatorElement.Exec !!!!")
+	log.Println("\t!!!!in ActuatorElement.Exec !!!!")
 	ok, exist := ae.Interval[d.Node.Name]
 	if !exist {
 		ae.Interval[d.Node.Name] = true
@@ -88,11 +94,10 @@ func (ae *ActuatorElement) Exec(d *model.LogicData) {
 		go func() {
 			
 			res := Actuator{
-				Nid:    d.Node.Nid,
-				Aid:    ae.Aid,
+				Nid:    "STA" + strconv.Itoa(d.Node.Nid),
+				Name:   ae.Name,
 				Values: ae.Values,
 			}
-			log.Println("in ActuatorElement.Exec, res = ", res)
 					
 			pbytes, _ := json.Marshal(res)
 			buff := bytes.NewBuffer(pbytes)
@@ -105,7 +110,7 @@ func (ae *ActuatorElement) Exec(d *model.LogicData) {
 			defer resp.Body.Close()
 		}()
 		
-		tick := time.NewTicker(30 * time.Second)
+		tick := time.NewTicker(1 * time.Second)
 		go func() {
 			<-tick.C
 			ae.Interval[d.Node.Name] = true
@@ -129,17 +134,16 @@ type DroneElement struct {
 }
 
 func (de *DroneElement) Exec(d *model.LogicData) {
-	log.Println("\t\t!!!!in DroneElement.Exec !!!!")
+	log.Println("\t!!!!in DroneElement.Exec !!!!")
 			
 	if !de.Sent {
 		de.Sent = true
 		go func() {
 			res := Drone{
-				Nid:    de.Nid,
+				Nid:    "DRO0",
 				Values: de.Values,
-				Tagidx: de.Tagidx,
+				Tagidx: 1,
 			}
-			log.Println("\t\tin DroneElement.Exec, res = ", res)
 					
 			pbytes, _ := json.Marshal(res)
 			buff := bytes.NewBuffer(pbytes)
@@ -153,4 +157,81 @@ func (de *DroneElement) Exec(d *model.LogicData) {
 		}()
 	}
 	de.BaseElement.Exec(d)
+}
+
+type AlarmElement struct { // 도착 알림을 위한 action
+	BaseElement
+	Email      string `json:"email"`
+	OrderNum   string `json:"ordernum"`
+	SrcStation string `json:"src_station"`
+	DestTag    string `json:"dest_tag"`
+	SrcName    string `json:"src_name"`
+	DestName   string `json:"dest_name"`
+}
+
+func (ae *AlarmElement) Exec(d *model.LogicData) {
+	log.Println("\t!!!!in AlarmElement.Exec !!!!")
+
+	to := []string{ae.Email}
+	subject := "AirPost 배송 완료 - 송장번호(" + ae.OrderNum + ")"
+	body := "송장번호 : " + ae.OrderNum + "\r\n" +
+		"출발 스테이션 : " + ae.SrcStation + "\r\n" +
+		"도착 태그 : " + ae.DestTag + "\r\n" + "\r\n" +
+		ae.DestName + "님, " + ae.SrcName + "님이 발송하신 물품이 배송 완료되었습니다."
+
+	msg := "From: " + from + "\n" +
+		"To: " + strings.Join(to, ",") + "\n" +
+		"Subject: " + subject + "\n\n" + body
+
+	err := smtp.SendMail(GoogleSMTPServer + ":587",
+		smtp.PlainAuth("", from, pass, GoogleSMTPServer),
+		from, to, []byte(msg))
+
+	if err != nil {
+		log.Panicln("smtp send error: ", err)
+	} else {
+		log.Println("smtp send ok")
+	}
+
+	ae.BaseElement.Exec(d)
+}
+
+type MovingElement struct { // 데이터베이스에 드론 위치를 동기화시키기 위한 action
+	BaseElement
+	Nid int `json:"nid"`
+}
+
+type Moving struct {
+	Nid int `json:"nid"` // drone node id
+	Location struct {
+		Lat float64 `json:"lat"`
+		Lon float64 `json:"lon"`
+		Alt float64 `json:"alt"`
+	} `json:"location"`
+}
+
+func (me *MovingElement) Exec(d *model.LogicData) {
+	log.Println("\t!!!!in TrackingElement.Exec !!!!")
+			
+	go func() {
+		res := Moving{
+			Nid:      me.Nid,
+			Location: struct{Lat float64 "json:\"lat\""; Lon float64 "json:\"lon\""; Alt float64 "json:\"alt\""}{
+				Lat: d.Values["lat"],
+				Lon: d.Values["long"],
+				Alt: d.Values["alt"],
+			},
+		}
+				
+		pbytes, _ := json.Marshal(res)
+		buff := bytes.NewBuffer(pbytes)
+		log.Println("in Tracking.Exec, 받는 주소: " + "http://" + setting.Appsetting.Server + "/regist/node/update" + " 전달내용: " + string(pbytes))
+		resp, err := http.Post("http://"+setting.Appsetting.Server+"/regist/node/update", "application/json", buff)
+		if err != nil {
+			panic(err)
+		}
+		defer resp.Body.Close()
+	}()
+
+	me.BaseElement.Exec(d)
 }

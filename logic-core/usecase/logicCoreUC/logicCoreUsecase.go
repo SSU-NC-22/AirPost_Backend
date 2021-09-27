@@ -31,14 +31,11 @@ func NewLogicCoreUsecase(rr repository.RegistRepo,
 
 	go func() {
 		for rawData := range in {
-			log.Println("in NewLogicCoreUsecase, run go routin")
 
 			ld, err := lcu.ToLogicData(&rawData) // 데이터 보강
 			if err != nil {
-				log.Println("Error in NewLogicCoreUsecase in ToLogicData")
 				continue
 			}
-			log.Println("in NewLogicCoreUsecase, ld(LogicData) = ", ld)
 
 			lchs, err := lcu.ls.GetLogicChans(ld.NodeID)
 			if err != nil {
@@ -46,16 +43,12 @@ func NewLogicCoreUsecase(rr repository.RegistRepo,
 					log.Println("it's drone") // delivery 없음
 					continue
 				} else {
-					log.Print("Error in NewLogicCoreUsecase : ")
 					panic(err)
 				}
 			}
 			if err == nil {
-				log.Println("in NewLogicCoreUsecase, lchs = ", lchs)
 				for _, ch := range lchs {
-					log.Println("?????")
 					if len(ch) != cap(ch) {
-						log.Println("?????-----?????")
 						ch <- ld // go to "listen" in CreateAndStartLogic core.go
 					}
 				}

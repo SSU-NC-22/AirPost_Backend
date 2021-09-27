@@ -41,7 +41,7 @@ func (sq Square) IsBinded() bool {
 type Page struct {
 	Page int `form:"page" json:"page"` // 현재 page 넘버
 	Sink int `form:"sink" json:"sink"` // 해당 node의 sink
-	Size int `form:"size" json:"size"` // 0 -> 10 ?
+	Size int `form:"size" json:"size"`
 }
 
 func (p Page) IsBinded() bool {

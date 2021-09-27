@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -98,7 +96,7 @@ func (h *Handler) RegistSink(c *gin.Context) {
 		return
 	}
 
-	err := h.ru.RegistSink(&sink) // sink.Topic 내용 채워짐
+	err := h.ru.RegistSink(&sink)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -172,10 +170,9 @@ func (h *Handler) ListNodes(c *gin.Context) {
 		if page.Page == 1 {
 			pages = h.ru.GetNodePageCount(page)
 		}
-		fmt.Println(nodes)
 		c.JSON(http.StatusOK, gin.H{"nodes": nodes, "pages": pages})
 		return
-	} else if c.Bind((&square)); square.IsBinded() { // map
+	} else if c.Bind((&square)); square.IsBinded() {
 		if nodes, err = h.ru.GetNodesSquare(square); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -220,18 +217,13 @@ func (h *Handler) ListNodesBySink(c *gin.Context) {
 // @Success 200 {object} model.Node "include sink, sink.topic, sensors, sensors.logics info"
 // @Router /regist/node [post]
 func (h *Handler) RegistNode(c *gin.Context) {
-	log.Println("===== handler RegistNode func start =====")
 	var node model.Node
 	if err := c.ShouldBindJSON(&node); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	
-	log.Println("node = ", node)
-
 	if node.Type[:3] == "DRO" {
-		log.Println("regist drone node")
-
 		stationid, err := strconv.Atoi(node.Type[4:])
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -239,7 +231,6 @@ func (h *Handler) RegistNode(c *gin.Context) {
 		}
 		node.Type = node.Type[:3]
 
-		log.Println("before RegistNode, node = ", node)
 		err = h.ru.RegistNode(&node)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -258,31 +249,134 @@ func (h *Handler) RegistNode(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-	} else if node.Type[:3] == "STA" {
-		log.Println("regist station node")
 
+		// drone 이동할때마다 위치 업데이트하는 logic 생성 및 실행
+		movingElem := adapter.Element{
+			Elem: "moving",
+			Arg: map[string]interface{} {
+				"nid": node.ID,
+			},
+		}
+		aMovingLogic := adapter.Logic{
+			LogicName: "moving-" + strconv.Itoa(node.ID),
+			Elems: []adapter.Element{movingElem},
+			NodeID: node.ID,
+			Node: node,
+		}
+
+		movingLogic, err := adapter.LogicToModel(&aMovingLogic)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		err = h.ru.RegistLogic(&movingLogic)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		h.eu.CreateLogicEvent(&movingLogic)
+
+	} else if node.Type[:3] == "STA" {
 		err := h.ru.RegistNode(&node)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
+		// regist night LED logic
+		night := adapter.Range{Max: 512, Min: 0}
+		rl := []adapter.Range{night}
+		e1 := adapter.Element{
+			Elem: "value",
+			Arg:  map[string]interface{} {
+				"value": "light",
+				"range": rl,
+			},
+		}
+		v := adapter.Value{Value: 1, Sleep: 0}
+		vl := []adapter.Value{v}
+		e2 := adapter.Element{
+			Elem: "actuator",
+			Arg:  map[string]interface{} {
+				"nid": "STA" + strconv.Itoa(node.ID),
+				"name": "LED ON",
+				"values": vl,
+			},
+		}
+		aLedLogic := adapter.Logic{
+			LogicName: "LED ON station#" + strconv.Itoa(node.ID),
+			Elems: []adapter.Element{e1, e2},
+			NodeID: node.ID,
+			Node: node,
+		}
+
+		nightLedLogic, err := adapter.LogicToModel(&aLedLogic)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		err = h.ru.RegistLogic(&nightLedLogic)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		h.eu.CreateLogicEvent(&nightLedLogic)
+
+		// regist day LED logic
+		day := adapter.Range{Max: 1024, Min: 512}
+		rl = []adapter.Range{day}
+		e1 = adapter.Element{
+			Elem: "value",
+			Arg:  map[string]interface{} {
+				"value": "light",
+				"range": rl,
+			},
+		}
+		v = adapter.Value{Value: 0, Sleep: 0}
+		vl = []adapter.Value{v}
+		e2 = adapter.Element{
+			Elem: "actuator",
+			Arg:  map[string]interface{} {
+				"nid": "STA" + strconv.Itoa(node.ID),
+				"name": "LED OFF",
+				"values": vl,
+			},
+		}
+		aLedLogic = adapter.Logic{
+			LogicName: "LED OFF station#" + strconv.Itoa(node.ID),
+			Elems: []adapter.Element{e1, e2},
+			NodeID: node.ID,
+			Node: node,
+		}
+
+		dayLedLogic, err := adapter.LogicToModel(&aLedLogic)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		err = h.ru.RegistLogic(&dayLedLogic)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		h.eu.CreateLogicEvent(&dayLedLogic)
+
+		// regist path between station and tag
 		tags, err := h.ru.GetNodesBySinkID(TAG)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		for _, tag := range tags {
-			log.Println("tag #", tag.ID)
 			/* 
-			// using naver map api
+			// TODO: using naver map api
 			start := node.LocLon + "," + node.LocLat
 			goal := tag.LocLon + "," + tag.LocLat
 			client := resty.New()
 			resp, err := client.R().
 				SetQueryString("start=" + start + "&goal=" + goal).
-				SetHeader("X-NCP-APIGW-API-KEY-ID", "6a14n8xual").
-				SetHeader("X-NCP-APIGW-API-KEY", "vej8eUozJVRvtrdCZcTlV4ea9ljEriJUxdEa7j42").
+				SetHeader("X-NCP-APIGW-API-KEY-ID", "").
+				SetHeader("X-NCP-APIGW-API-KEY", "").
 				Get("https://naveropenapi.apigw.ntruss.com/map-direction/v1/driving")
 			if err != nil {
 				panic(err)
@@ -300,7 +394,6 @@ func (h *Handler) RegistNode(c *gin.Context) {
 				Path: "",
 				Distance: dist,
 			}
-			log.Println("path : ", path)
 			if err := h.ru.RegistPath(&path); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
@@ -308,21 +401,19 @@ func (h *Handler) RegistNode(c *gin.Context) {
 		}
 		// resp.Body.Close()		
 	} else if node.Type[:3] == "TAG" {
-		log.Println("regist tag node")
-
 		err := h.ru.RegistNode(&node)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
+		// regist path between station and tag
 		stations, err := h.ru.GetNodesBySinkID(STATION)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		for _, station := range stations {
-			log.Println("station #", station.ID)
 			// calc distance
 			powLon := math.Pow((node.LocLon - station.LocLon), 2)
 			powLat := math.Pow((node.LocLat - station.LocLat), 2)
@@ -334,7 +425,6 @@ func (h *Handler) RegistNode(c *gin.Context) {
 				Path: "",
 				Distance: dist,
 			}
-			log.Println("path : ", path)
 			if err := h.ru.RegistPath(&path); err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
@@ -388,6 +478,28 @@ func (h *Handler) UnregistNode(c *gin.Context) {
 	c.JSON(http.StatusOK, node)
 }
 
+func (h *Handler) UpdateNodeLoc(c *gin.Context) {
+	var new struct{
+		Nid      int              `json:"nid"`
+		Location adapter.Location `json:"location"`
+	}
+	if err := c.ShouldBindJSON(&new); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	node, err := h.ru.GetNodeByID(new.Nid)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if err := h.ru.UpdateNodeLoc(node, &new.Location); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, new)
+}
+
 /**************************************************************/
 /* Logic handler                                              */
 /**************************************************************/
@@ -423,9 +535,7 @@ func (h *Handler) RegistLogic(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	log.Println("aLogic = ", aLogic)
 	logic, err := adapter.LogicToModel(&aLogic)
-	log.Println("logic = ", logic)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -594,7 +704,6 @@ func (h *Handler) UnregistTopic(c *gin.Context) {
 // @Success 200 {object} model.Delivery
 // @Router /regist/delivery [post]
 func (h *Handler) RegistDelivery(c *gin.Context) {
-	log.Println("===== handler RegistDelivery func start =====")
 	var delivery model.Delivery
 	delivery.CreatedAt = time.Now()
 
@@ -621,7 +730,6 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	log.Println("droneid = ", droneid)
 
 	// Regist Delivery with DroneID and Drone
 	drone, err := h.ru.GetNodeByID(droneid)
@@ -631,7 +739,6 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	}
 	delivery.Drone = *drone
 	delivery.DroneID = droneid
-	log.Println("delivery : ", delivery)
 
 	err = h.ru.RegistDelivery(&delivery)
 	if err != nil {
@@ -667,18 +774,29 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		}
 	}
 
+	// srcStation, destTag 정보를 가져옴
+	srcStation, err := h.ru.GetNodeByID(delivery.SrcStationID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	destTag, err := h.ru.GetNodeByID(delivery.DestTagID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
 	/* 드론에게 path 전달하는 logic 생성 및 실행 */
-	// TODO
-	srcStationLoc := []float64{37.497365670723944, 126.95591909983503} // 위도(lat), 경도(lon)
-	tagLoc := []float64{37.49719755738831, 126.95590032437323}
-	destStationLoc := []float64{37.4971933013496, 126.95619804955307}
+	srcStationLoc := []float64{srcStation.LocLat, srcStation.LocLon, 1, 22} // lat, lon, alt, 명령(22: 이륙)
+	tagLoc := []float64{destTag.LocLat, destTag.LocLon, 1, 16} // lat, lon, alt, 명령(16: 이동)
+	destStationLoc := []float64{destStation.LocLat, destStation.LocLon, 0, 21} // lat, lon, alt, 명령(21: 착륙)
 
 	path := [][]float64{}
 	path = append(path, srcStationLoc)
 	path = append(path, tagLoc)
 	path = append(path, destStationLoc)
 
-	aPathLogicElement := adapter.Element{
+	droneElem := adapter.Element{
 		Elem: "drone",
 		Arg:  map[string]interface{} {
 			"nid":    "DRO" + strconv.Itoa(delivery.DroneID),
@@ -686,25 +804,24 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 			"tagidx": 1, // TODO
 		},
 	}
-	aPathLogic := adapter.Logic{
-		LogicName: "drone",
-		Elems: []adapter.Element{aPathLogicElement},
+	aDroneLogic := adapter.Logic{
+		LogicName: "drone-" + delivery.OrderNum,
+		Elems: []adapter.Element{droneElem},
 		NodeID: delivery.DroneID,
 		Node: delivery.Drone,
 	}
-	log.Println("aPathLogic = ", aPathLogic)
 
-	pathLogic, err := adapter.LogicToModel(&aPathLogic)
+	droneLogic, err := adapter.LogicToModel(&aDroneLogic)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err = h.ru.RegistLogic(&pathLogic)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	h.eu.CreateLogicEvent(&pathLogic)
+	// err = h.ru.RegistLogic(&droneLogic)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
+	h.eu.CreateLogicEvent(&droneLogic)
 
 	/* 도착 알람을 위한 logic 생성 및 실행 */
 	e1 := adapter.Element{
@@ -714,38 +831,39 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 		},
 	}
 	e2 := adapter.Element{
-		Elem: "email",
+		Elem: "alarm",
 		Arg: map[string]interface{}{
-			// "text": delivery.Email,
-			"text": "eunseo@q.ssu.ac.kr",
+			"email":       delivery.Email,
+			"ordernum":    delivery.OrderNum,
+			"src_station": srcStation.Name,
+			"dest_tag":    destTag.Name,
+			"src_name":    delivery.SrcName,
+			"dest_name":   delivery.DestName,
 		},
 	}
 	aAlarmLogic := adapter.Logic{
-		LogicName: delivery.OrderNum,
+		LogicName: "alarm-" + delivery.OrderNum,
 		Elems: []adapter.Element{e1, e2},
 		NodeID: delivery.DroneID,
 	}
-	log.Println("aAlarmLogic = ", aAlarmLogic)
 
 	alarmLogic, err := adapter.LogicToModel(&aAlarmLogic)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err = h.ru.RegistLogic(&alarmLogic)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	// err = h.ru.RegistLogic(&alarmLogic)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
 	h.eu.CreateLogicEvent(&alarmLogic)
 
 	// go h.eu.CreateDeliveryEvent(&delivery)
 	c.JSON(http.StatusOK, delivery)
-	log.Println("===== handler RegistDelivery func fin =====")
 }
 
 func (h *Handler) GetDroneID(c *gin.Context) {
-	// log.Println("===== handler GetDroneID func start =====")
 	ordernum, err := strconv.Atoi(c.Param("orderNum"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -765,7 +883,6 @@ func (h *Handler) GetDroneID(c *gin.Context) {
 /* Tracking service handler                                   */
 /**************************************************************/
 func (h *Handler) GetTracking(c *gin.Context) {
-	log.Println("===== handler GetTracking func start =====")
 	ordernum, err := strconv.Atoi(c.Param("orderNum"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -777,15 +894,18 @@ func (h *Handler) GetTracking(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	log.Println("delivery : ", delivery)
 
 	src, err := h.ru.GetNodeByID(delivery.SrcStationID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
 	dest, err := h.ru.GetNodeByID(delivery.DestTagID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	drone, err := h.ru.GetNodeByID(delivery.DroneID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -797,11 +917,8 @@ func (h *Handler) GetTracking(c *gin.Context) {
 		SrcLng:	  src.LocLon,
 		DestLat:  dest.LocLat,
 		DestLng:  dest.LocLon,
-		DroneLat: 0,
-		DroneLng: 0,
+		DroneLat: drone.LocLat,
+		DroneLng: drone.LocLon,
 	}
-	log.Println("tracking : ", tracking)
-
 	c.JSON(http.StatusOK, tracking)
-	log.Println("===== handler GetTracking func fin =====")
 }

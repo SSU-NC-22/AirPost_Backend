@@ -70,3 +70,7 @@ func (ru *registUsecase) RegistNode(n *model.Node) error {
 func (ru *registUsecase) UnregistNode(n *model.Node) error {
 	return ru.ndr.Delete(n)
 }
+
+func (ru *registUsecase) UpdateNodeLoc(n *model.Node, loc *adapter.Location) error {
+	return ru.ndr.UpdateNodeLoc(n, loc)
+}

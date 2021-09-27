@@ -12,7 +12,6 @@ import (
 /* Logic service handler                                      */
 /**************************************************************/
 
-// TODO : if l.Addr is dubplicated then remove old one
 func (h *Handler) RegistLogicService(c *gin.Context) {
 	var l model.LogicService
 	if err := c.ShouldBindJSON(&l); err != nil {

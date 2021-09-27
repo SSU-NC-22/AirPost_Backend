@@ -21,26 +21,7 @@ func (s *Sink) BeforeDelete(tx *gorm.DB) (err error) {
 
 // node
 func (n *Node) AfterCreate(tx *gorm.DB) (err error) {
-	return tx.Preload("Sink.Topic").Preload("Sink").Preload("Logics").Find(n).Error
-
-	// if err := tx.Preload("Sink.Topic").Preload("Sink").Find(n).Error; err != nil {
-	// 	return err
-	// }
-
-	// l := []Logic{}
-	// if err := tx.Preload("Logics").Find(&l).Error; err != nil {
-	// 	return err
-	// }
-
-	// l := []Logic{}
-	// // TODO : I want to Preload("Sensors.Logics") but it dosen't work for me :(
-	// for i := range n.Sensors {
-	// 	if err := tx.Where("sensor_id=?", n.Sensors[i].ID).Find(&l).Error; err != nil {
-	// 		return err
-	// 	}
-	// 	n.Sensors[i].Logics = l
-	// }
-	// return nil
+	return tx.Preload("Sink.Topic").Preload("Sink").Preload("Logics").Preload("SensorValues", orderByASC).Find(n).Error
 }
 
 func (n *Node) BeforeDelete(tx *gorm.DB) (err error) {

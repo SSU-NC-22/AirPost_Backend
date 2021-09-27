@@ -28,7 +28,6 @@ func main() {
 	r := gin.New()
 
 	r.GET("/health-check", func(c *gin.Context) {
-		log.Println("GET /health-check")
 		listen := make(chan interface{})
 		wu.Register(listen)
 		defer wu.Unregister(listen)
@@ -60,7 +59,6 @@ func main() {
 			if err != nil {
 				log.Println("conn.WriteJSON error : ", err)
 			}
-			log.Println("after conn.WriteJSON")
 		}
 		fmt.Println("disconnect websocket!")
 	})

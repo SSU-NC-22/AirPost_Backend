@@ -3,6 +3,7 @@ package model
 import (
 	"log"
 	"time"
+	"math"
 
 	"github.com/eunnseo/AirPost/health-check/adapter"
 	// "github.com/eunnseo/AirPost/health-check/setting"
@@ -22,7 +23,7 @@ type SinkStatus struct {
 type NodeStatus struct {
 	NodeID   int       `json:"nid"`
 	State    int       `json:"state"`
-	Battery  int       `json:"battery"`
+	Battery  int       `json:"battery"` // 퍼센트
 	Location []float64 `json:"location"` // [lat, lon, alt]
 }
 
@@ -34,10 +35,17 @@ type Status struct {
 	LastConnect time.Time `json:"last_connect"`
 }
 
-func NewStatus(ns adapter.NodeState, t time.Time) Status { // 인자로 받은 work 여부로 Status 구조체 설정
+func ToPercentage(battery float64) int {
+	minVal := 14.0
+	maxVal := 16.8
+	per := math.Round((battery - minVal) / (maxVal-minVal) * 100)
+	return int(per)
+}
+
+func NewStatus(ns adapter.NodeState, t time.Time) Status {
 	res := Status{
 		Work:        ns.State,
-		Battery:     ns.Battery,
+		Battery:     ToPercentage(ns.Battery),
 		Location:    ns.Location,
 		LastConnect: t,
 	}
@@ -49,7 +57,7 @@ func NewStatus(ns adapter.NodeState, t time.Time) Status { // 인자로 받은 w
 	return res
 }
 
-func (s *Status) setState(v int) { // 인자로 받은 v로 Status구조체 변경
+func (s *Status) setState(v int) {
 	s.State = v
 	switch v {
 	case RED:
@@ -81,9 +89,10 @@ func (s *Status) UpdateState(ns adapter.NodeState, t time.Time) bool {
 	}
 
 	// Update battery
-	if s.Battery != ns.Battery {
+	battery := ToPercentage(ns.Battery)
+	if s.Battery != battery {
 		log.Println("changed battery")
-		s.Battery = ns.Battery
+		s.Battery = battery
 		isChanged = true
 	}
 
@@ -100,8 +109,9 @@ func (s *Status) UpdateState(ns adapter.NodeState, t time.Time) bool {
 }
 
 func (s *Status) CheckDrop() bool {
-	s.setState(RED)
-	now := time.Now()
-	timeout := time.Now() //s.LastConnect.Add(time.Duration(setting.StatusSetting.Drop) * time.Hour)
-	return now.After(timeout) // TODO
+	// s.setState(RED)
+	// now := time.Now()
+	// timeout := time.Now() // s.LastConnect.Add(time.Duration(setting.StatusSetting.Drop) * time.Hour)
+	// return now.After(timeout)
+	return false
 }

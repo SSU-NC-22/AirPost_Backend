@@ -24,6 +24,7 @@ type NodeRepo interface {
 	FindsByID(id int) (*model.Node, error)
 	Create(*model.Node) error
 	Delete(*model.Node) error
+	UpdateNodeLoc(n *model.Node, loc *adapter.Location) error
 }
 
 type LogicRepo interface {

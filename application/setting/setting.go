@@ -30,7 +30,6 @@ type App struct {
 func (as *App) Getenv() {
 	as.Server = os.Getenv("APP_SERVER")
 	if as.Server == "" {
-		// as.Server = "221.140.150.7:8081"
 		as.Server = "192.168.0.18:8081"
 	}
 }
@@ -63,7 +62,7 @@ func (ds *Database) Getenv() {
 	}
 	ds.Pass = os.Getenv("DB_PASS")
 	if ds.Pass == "" {
-		ds.Pass = "airpost203"
+		ds.Pass = ""
 	}
 	ds.Database = os.Getenv("DB_DATABASE")
 	if ds.Database == "" {
