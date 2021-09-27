@@ -6,7 +6,7 @@ import (
 	"math"
 
 	"github.com/eunnseo/AirPost/health-check/adapter"
-	"github.com/eunnseo/AirPost/health-check/setting"
+	// "github.com/eunnseo/AirPost/health-check/setting"
 )
 
 const (
@@ -109,8 +109,9 @@ func (s *Status) UpdateState(ns adapter.NodeState, t time.Time) bool {
 }
 
 func (s *Status) CheckDrop() bool {
-	s.setState(RED)
-	now := time.Now()
-	timeout := s.LastConnect.Add(time.Duration(setting.StatusSetting.Drop) * time.Hour)
-	return now.After(timeout)
+	// s.setState(RED)
+	// now := time.Now()
+	// timeout := time.Now() // s.LastConnect.Add(time.Duration(setting.StatusSetting.Drop) * time.Hour)
+	// return now.After(timeout)
+	return false
 }
