@@ -375,8 +375,8 @@ func (h *Handler) RegistNode(c *gin.Context) {
 			client := resty.New()
 			resp, err := client.R().
 				SetQueryString("start=" + start + "&goal=" + goal).
-				SetHeader("X-NCP-APIGW-API-KEY-ID", "6a14n8xual").
-				SetHeader("X-NCP-APIGW-API-KEY", "vej8eUozJVRvtrdCZcTlV4ea9ljEriJUxdEa7j42").
+				SetHeader("X-NCP-APIGW-API-KEY-ID", "").
+				SetHeader("X-NCP-APIGW-API-KEY", "").
 				Get("https://naveropenapi.apigw.ntruss.com/map-direction/v1/driving")
 			if err != nil {
 				panic(err)

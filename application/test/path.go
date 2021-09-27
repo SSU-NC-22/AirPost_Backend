@@ -16,8 +16,8 @@ func main() {
 
 	resp1, err := client.R().
 		SetQueryString("start=" + startStation + "&goal=" + tag).
-		SetHeader("X-NCP-APIGW-API-KEY-ID", "6a14n8xual").
-		SetHeader("X-NCP-APIGW-API-KEY", "vej8eUozJVRvtrdCZcTlV4ea9ljEriJUxdEa7j42").
+		SetHeader("X-NCP-APIGW-API-KEY-ID", "").
+		SetHeader("X-NCP-APIGW-API-KEY", "").
 		Get("https://naveropenapi.apigw.ntruss.com/map-direction/v1/driving")
 	if err != nil || !resp1.IsSuccess() {
 		log.Println("resp 1")
@@ -28,8 +28,8 @@ func main() {
 
 	resp2, err := client.R().
 		SetQueryString("start=" + tag + "&goal=" + destStation).
-		SetHeader("X-NCP-APIGW-API-KEY-ID", "6a14n8xual").
-		SetHeader("X-NCP-APIGW-API-KEY", "vej8eUozJVRvtrdCZcTlV4ea9ljEriJUxdEa7j42").
+		SetHeader("X-NCP-APIGW-API-KEY-ID", "").
+		SetHeader("X-NCP-APIGW-API-KEY", "").
 		Get("https://naveropenapi.apigw.ntruss.com/map-direction/v1/driving")
 	if err != nil || !resp2.IsSuccess() {
 		log.Println("resp 2")
