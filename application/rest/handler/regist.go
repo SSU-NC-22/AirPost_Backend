@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -690,6 +692,65 @@ func (h *Handler) UnregistTopic(c *gin.Context) {
 /**************************************************************/
 /* Delivery service handler                                   */
 /**************************************************************/
+
+// assignDrone picks the drone to fly an order. It prefers a usable drone already
+// parked on the source station (no ferry). If none is there, it ferries in the
+// nearest idle drone from another station. It returns the drone id and the station
+// the drone currently sits on (its take-off point), or an error if the whole fleet
+// is busy.
+func (h *Handler) assignDrone(src *model.Node) (int, *model.Node, error) {
+	if id, ok := h.usableDroneAt(src.ID); ok {
+		return id, src, nil
+	}
+
+	stations, err := h.ru.GetNodesBySinkID(STATION)
+	if err != nil {
+		return 0, nil, err
+	}
+	var nearest *model.Node
+	nearestDrone, nearestDist := -1, math.MaxFloat64
+	for i := range stations {
+		s := &stations[i]
+		if s.ID == src.ID {
+			continue
+		}
+		id, ok := h.usableDroneAt(s.ID)
+		if !ok {
+			continue
+		}
+		if d := planarDistance(src, s); d < nearestDist {
+			nearestDist, nearest, nearestDrone = d, s, id
+		}
+	}
+	if nearest == nil {
+		return 0, nil, errors.New("no usable drone available in the fleet")
+	}
+	return nearestDrone, nearest, nil
+}
+
+// usableDroneAt returns the id of a usable drone parked on the station that is not
+// already flying a mission, if any.
+func (h *Handler) usableDroneAt(stationID int) (int, bool) {
+	sdl, err := h.ru.GetStationDroneByStationID(stationID)
+	if err != nil {
+		return 0, false
+	}
+	for _, sd := range sdl {
+		if sd.Usable && !(h.dispatcher != nil && h.dispatcher.IsDroneBusy(sd.DroneID)) {
+			return sd.DroneID, true
+		}
+	}
+	return 0, false
+}
+
+// planarDistance is a fast monotonic distance between two nodes' lat/lon (a local
+// tangent-plane approximation), adequate for choosing the nearest station.
+func planarDistance(a, b *model.Node) float64 {
+	dLat := a.LocLat - b.LocLat
+	dLon := (a.LocLon - b.LocLon) * math.Cos(a.LocLat*math.Pi/180)
+	return math.Hypot(dLat, dLon)
+}
+
 // RegistDelivery ...
 // @Summary Add delivery info
 // @Description Add delivery info
@@ -712,30 +773,22 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	// value is ignored to keep it unique and non-forgeable.
 	delivery.OrderNum = generateOrderNum()
 
-	// SrcStation의 드론들 중 사용자가 사용할 드론을 정함
-	sdl, err := h.ru.GetStationDroneByStationID(delivery.SrcStationID)
+	// Resolve the source station (the parcel's pickup point).
+	srcStation, err := h.ru.GetNodeByID(delivery.SrcStationID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	if len(sdl) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no drone registered to the source station"})
+
+	// Assign a drone: prefer one already parked on the source station; otherwise
+	// ferry in the nearest idle drone from another station. takeoffStation is where
+	// the chosen drone currently sits (its lift-off point).
+	droneid, takeoffStation, err := h.assignDrone(srcStation)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	droneid := -1
-	for _, sd := range(sdl) {
-		if sd.Usable {
-			droneid = sd.DroneID
-			break
-		}
-	}
-	if droneid == -1 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "no usable drone available at the source station"})
-		return
-	}
-
-	// Regist Delivery with DroneID and Drone
 	drone, err := h.ru.GetNodeByID(droneid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -744,46 +797,32 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	delivery.Drone = *drone
 	delivery.DroneID = droneid
 
-	err = h.ru.RegistDelivery(&delivery)
-	if err != nil {
+	if err = h.ru.RegistDelivery(&delivery); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// destTag와 가장 가까운 destStation을 정함
+	// Land at the station nearest the drop tag.
 	destStation, err := h.ru.GetShortestPathStation(delivery.DestTagID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// SrcStation과 연결된 drone unregist, DestStation에 연결할 drone regist
-	if delivery.SrcStationID != destStation.ID {
-		sd := model.StationDrone{
-			StationID: delivery.SrcStationID,
-			DroneID:   droneid,
-		}
-		if err := h.ru.UnregistStationDrone(&sd); err != nil {
+	// Move the drone's station registration from where it took off to where it
+	// lands, so the fleet's parked-drone map stays correct for the next order.
+	if takeoffStation.ID != destStation.ID {
+		if err := h.ru.UnregistStationDrone(&model.StationDrone{StationID: takeoffStation.ID, DroneID: droneid}); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		sd = model.StationDrone{
-			StationID: destStation.ID,
-			DroneID:   droneid,
-			Usable:    true,
-		}
-		if err := h.ru.RegistStationDrone(&sd); err != nil {
+		if err := h.ru.RegistStationDrone(&model.StationDrone{StationID: destStation.ID, DroneID: droneid, Usable: true}); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 	}
 
-	// srcStation, destTag 정보를 가져옴
-	srcStation, err := h.ru.GetNodeByID(delivery.SrcStationID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	// destTag 정보를 가져옴 (srcStation은 위에서 이미 조회함)
 	destTag, err := h.ru.GetNodeByID(delivery.DestTagID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -863,12 +902,13 @@ func (h *Handler) RegistDelivery(c *gin.Context) {
 	}
 	h.eu.CreateLogicEvent(&alarmLogic)
 
-	// Publish the flight request to the delivery service over MQTT. The route
-	// is now fully resolved: srcStation = takeoff, destStation = landing,
-	// destTag = drop point. A nil dispatcher (no broker in dev/tests) is a
-	// no-op so delivery registration still succeeds.
+	// Publish the flight request to the delivery service over MQTT. The route is
+	// fully resolved: takeoffStation = lift-off (where the drone is), srcStation =
+	// pickup, destStation = nearest landing, destTag = drop point. When takeoff !=
+	// pickup the drone ferries in first. A nil dispatcher (no broker in dev/tests)
+	// is a no-op so delivery registration still succeeds.
 	if h.dispatcher != nil {
-		if err := h.dispatcher.Dispatch(&delivery, srcStation, destStation, destTag); err != nil {
+		if err := h.dispatcher.Dispatch(&delivery, takeoffStation, srcStation, destStation, destTag); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}

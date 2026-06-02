@@ -21,16 +21,20 @@ func localNorthEast(originLat, originLon, targetLat, targetLon float64) (north, 
 }
 
 // BuildDeliveryRequest builds the MQTT request JSON payload for a delivery.
-// takeoff is the source station, landing is the chosen nearest destination
-// station, and tag is the recipient drop point; the delivery point is encoded
-// as north/east meters relative to the takeoff station. cruise is the cruise
-// altitude in meters. This is a pure function so the mapping is unit-testable
-// without a broker or database.
-func BuildDeliveryRequest(d *model.Delivery, takeoff, landing, tag *model.Node, cruise float64) DeliveryRequest {
-	north, east := localNorthEast(takeoff.LocLat, takeoff.LocLon, tag.LocLat, tag.LocLon)
+// takeoff is the station the drone lifts off from, pickup is the station holding
+// the parcel (== takeoff unless the drone is ferried in from elsewhere), landing
+// is the chosen nearest destination station, and tag is the recipient drop point.
+// The delivery point is encoded as north/east meters relative to the PICKUP
+// station, since the parcel always travels from where it is picked up. cruise is
+// the assigned cruise altitude in meters. This is a pure function so the mapping
+// is unit-testable without a broker or database.
+func BuildDeliveryRequest(d *model.Delivery, takeoff, pickup, landing, tag *model.Node, cruise float64) DeliveryRequest {
+	north, east := localNorthEast(pickup.LocLat, pickup.LocLon, tag.LocLat, tag.LocLon)
 	return DeliveryRequest{
 		OrderID:   d.OrderNum,
+		DroneID:   d.DroneID,
 		TakeoffID: takeoff.ID,
+		PickupID:  pickup.ID,
 		DeliverN:  north,
 		DeliverE:  east,
 		LandingID: landing.ID,

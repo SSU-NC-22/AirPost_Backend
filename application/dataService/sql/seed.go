@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"os"
@@ -14,72 +15,129 @@ import (
 // dispatcher publishes to the sim.
 const earthRadiusMeters = 6371000.0
 
-// Seed IDs. Station node IDs intentionally equal sim station IDs in
-// simulation/tests/airpost_sites.json (the sim looks up world coords by these),
-// so a fresh `compose up` flies a real sortie with no manual setup.
+// Geo origin of the local Gazebo world (E=0,N=0). Station/tag lat/lon are derived
+// from the sim's local E/N via this origin, so the backend's geometry (nearest
+// station, ferry distances) matches what the simulator actually flies.
 const (
-	seedDroneID   = 50 // drone node
-	seedTakeoffID = 1  // source station  -> airpost_sites station 1
-	seedLandingID = 7  // landing station -> airpost_sites station 7
-	seedTagID     = 30 // destination tag (drop point)
-
-	sinkDrone   = 1 // drone-sink   (seeded in main.go)
-	sinkStation = 2 // station-sink
-	sinkTag     = 3 // tag-sink
+	originLat = 37.5
+	originLon = 127.0
 )
 
-// Seed inserts a usable demo topology (source station + landing station + drop
-// tag + drone, plus the station-drone link and a path) on first run so the GUI
-// order -> drone-flies -> track flow works end to end without any manual curl.
-// It is idempotent (FirstOrCreate by primary key) and a no-op when SEED_DEMO=0.
+// Sink IDs (seeded in main.go before Seed runs).
+const (
+	sinkDrone   = 1
+	sinkStation = 2
+	sinkTag     = 3
+)
+
+// ID ranges for the seeded demo fleet. Station IDs intentionally equal the sim
+// station IDs in simulation/tests/airpost_sites.json (the simulator looks up each
+// drone's spawn world-coords by station ID), so a fresh `compose up` flies real
+// multi-drone sorties with no manual setup.
+const (
+	fleetSize     = 8  // stations == drones == tags
+	droneIDBase   = 50 // drone i -> node id 50+i  (i = 1..fleetSize)
+	tagIDBase     = 30 // tag   i -> node id 30+i
+	tagDropNorthM = 12 // each tag sits this many meters north of its home station
+)
+
+// stationEN are the local east/north meters of stations 1..fleetSize, copied from
+// simulation/tests/airpost_sites.json (validated clear helipads, well separated so
+// the drones spawn at distinct positions). Index 0 is station ID 1.
+var stationEN = [fleetSize][2]float64{
+	{320, -32}, {352, 64}, {384, 32}, {32, -80},
+	{176, 256}, {224, -32}, {-144, 176}, {-144, 80},
+}
+
+// enToLatLon projects local east/north meters to lat/lon using the world origin
+// (the inverse of the equirectangular projection in delivery/mqtt/mapping.go).
+func enToLatLon(east, north float64) (lat, lon float64) {
+	rad := math.Pi / 180
+	lat = originLat + (north/earthRadiusMeters)/rad
+	lon = originLon + (east/(earthRadiusMeters*math.Cos(originLat*rad)))/rad
+	return lat, lon
+}
+
+// haversineMeters is the great-circle distance between two lat/lon points; used to
+// fill Path.Distance so GetShortestPathStation resolves the genuinely nearest
+// landing station for each drop tag.
+func haversineMeters(lat1, lon1, lat2, lon2 float64) float64 {
+	rad := math.Pi / 180
+	dLat := (lat2 - lat1) * rad
+	dLon := (lon2 - lon1) * rad
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Cos(lat1*rad)*math.Cos(lat2*rad)*math.Sin(dLon/2)*math.Sin(dLon/2)
+	return earthRadiusMeters * 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+}
+
+// Seed inserts a usable multi-drone demo topology on first run: fleetSize stations
+// (each a sim helipad with one usable drone parked on it), one drop tag per station,
+// and a full tag->station path matrix so the dispatcher can pick the nearest landing
+// station. It is idempotent (OnConflict DoNothing) and a no-op when SEED_DEMO=0.
 func Seed() {
 	if os.Getenv("SEED_DEMO") == "0" {
 		return
 	}
 
-	// Base lat/lon for the source station (gives the UI map a real location).
-	const baseLat, baseLon = 37.5000, 127.0000
+	var (
+		nodes   []model.Node
+		links   []model.StationDrone
+		paths   []model.Path
+		pathID  = 1
+		stLat   [fleetSize]float64
+		stLon   [fleetSize]float64
+		tagLat  [fleetSize]float64
+		tagLon  [fleetSize]float64
+	)
 
-	// Drop point 15 m north / 15 m east of the source station. The dispatcher
-	// re-derives these offsets from the tag's lat/lon, so place the tag there.
-	const deliverN, deliverE = 15.0, 15.0
-	rad := math.Pi / 180
-	tagLat := baseLat + (deliverN/earthRadiusMeters)/rad
-	tagLon := baseLon + (deliverE/(earthRadiusMeters*math.Cos(baseLat*rad)))/rad
+	for i := 0; i < fleetSize; i++ {
+		id := i + 1
+		lat, lon := enToLatLon(stationEN[i][0], stationEN[i][1])
+		stLat[i], stLon[i] = lat, lon
+		// Drop tag a few meters north of its home station.
+		tLat, tLon := enToLatLon(stationEN[i][0], stationEN[i][1]+tagDropNorthM)
+		tagLat[i], tagLon[i] = tLat, tLon
 
-	// Landing station offset (purely for a distinct map marker / track endpoint).
-	landLat := baseLat + (120.0/earthRadiusMeters)/rad
-	landLon := baseLon + (40.0/(earthRadiusMeters*math.Cos(baseLat*rad)))/rad
+		droneID := droneIDBase + id
+		tagID := tagIDBase + id
 
-	nodes := []model.Node{
-		{ID: seedDroneID, Name: "drone-1", Type: "drone", LocLat: baseLat, LocLon: baseLon, LocAlt: 0, SinkID: sinkDrone},
-		{ID: seedTakeoffID, Name: "station-src", Type: "station", LocLat: baseLat, LocLon: baseLon, LocAlt: 0, SinkID: sinkStation},
-		{ID: seedLandingID, Name: "station-dest", Type: "station", LocLat: landLat, LocLon: landLon, LocAlt: 0, SinkID: sinkStation},
-		{ID: seedTagID, Name: "tag-home", Type: "tag", LocLat: tagLat, LocLon: tagLon, LocAlt: 0, SinkID: sinkTag},
+		nodes = append(nodes,
+			model.Node{ID: id, Name: fmt.Sprintf("station-%d", id), Type: "station",
+				LocLat: lat, LocLon: lon, SinkID: sinkStation},
+			model.Node{ID: droneID, Name: fmt.Sprintf("drone-%d", id), Type: "drone",
+				LocLat: lat, LocLon: lon, SinkID: sinkDrone},
+			model.Node{ID: tagID, Name: fmt.Sprintf("tag-%d", id), Type: "tag",
+				LocLat: tLat, LocLon: tLon, SinkID: sinkTag},
+		)
+		// One usable drone parked on each station.
+		links = append(links, model.StationDrone{StationID: id, DroneID: droneID, Usable: true})
 	}
-	for i := range nodes {
-		if err := dbConn.Clauses(clause.OnConflict{DoNothing: true}).
-			Omit(clause.Associations).Create(&nodes[i]).Error; err != nil {
-			log.Printf("seed: node %d: %v", nodes[i].ID, err)
+
+	// Full tag -> station path matrix with real distances, so landing resolves to
+	// the station nearest the drop point (which, for a cross-map delivery, is the
+	// destination station rather than the takeoff one).
+	for t := 0; t < fleetSize; t++ {
+		tagID := tagIDBase + (t + 1)
+		for s := 0; s < fleetSize; s++ {
+			stationID := s + 1
+			dist := haversineMeters(tagLat[t], tagLon[t], stLat[s], stLon[s])
+			paths = append(paths, model.Path{
+				ID: pathID, StationID: stationID, TagID: tagID, Path: "[]", Distance: dist,
+			})
+			pathID++
 		}
 	}
 
-	// The source station has a usable drone parked on it.
-	sd := model.StationDrone{StationID: seedTakeoffID, DroneID: seedDroneID, Usable: true}
-	if err := dbConn.Clauses(clause.OnConflict{DoNothing: true}).
-		Omit(clause.Associations).Create(&sd).Error; err != nil {
-		log.Printf("seed: station_drone: %v", err)
+	create := func(what string, v interface{}) {
+		if err := dbConn.Clauses(clause.OnConflict{DoNothing: true}).
+			Omit(clause.Associations).Create(v).Error; err != nil {
+			log.Printf("seed: %s: %v", what, err)
+		}
 	}
+	create("nodes", &nodes)
+	create("station_drone", &links)
+	create("paths", &paths)
 
-	// One path tag -> source station so GetShortestPathStation resolves a landing
-	// station for the drop tag. Landing back at the source station keeps the drone
-	// parked there (Usable), so the demo is repeatable on the same `compose up`
-	// (RegistDelivery only migrates the drone when src != dest station).
-	path := model.Path{ID: 1, StationID: seedTakeoffID, TagID: seedTagID, Path: "[]", Distance: 10.0}
-	if err := dbConn.Clauses(clause.OnConflict{DoNothing: true}).Create(&path).Error; err != nil {
-		log.Printf("seed: path: %v", err)
-	}
-
-	log.Printf("seed: demo topology ready (src station %d, dest station %d, tag %d, drone %d)",
-		seedTakeoffID, seedLandingID, seedTagID, seedDroneID)
+	log.Printf("seed: demo topology ready (%d stations, %d drones, %d tags, %d paths)",
+		fleetSize, fleetSize, fleetSize, len(paths))
 }

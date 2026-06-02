@@ -10,12 +10,23 @@ const (
 	StatusTopic  = "airpost/delivery/status"
 )
 
-// DeliveryRequest is published to RequestTopic to start a flight. deliver_N /
-// deliver_E are local north/east offsets in meters from the takeoff station;
-// takeoff_id / landing_id are station node IDs; cruise is the cruise altitude.
+// DeliveryRequest is published to RequestTopic to start a flight.
+//
+//   - takeoff_id : station the assigned drone currently sits on (where it lifts off).
+//   - pickup_id  : station holding the parcel (the order's source). When it differs
+//     from takeoff_id the drone ferries takeoff -> pickup first, then carries the
+//     parcel to the drop. They are equal for the common "drone already at source" case.
+//   - deliver_N / deliver_E : local north/east meters from the PICKUP station to the
+//     drop point (the parcel always travels from where it is picked up).
+//   - landing_id : station to land on after the drop (the one nearest the drop point).
+//   - cruise : cruise altitude in meters; the dispatcher assigns a distinct altitude
+//     band per concurrent mission so airborne drones never share an altitude (server-
+//     side collision deconfliction).
 type DeliveryRequest struct {
 	OrderID   string  `json:"order_id"`
+	DroneID   int     `json:"drone_id"`
 	TakeoffID int     `json:"takeoff_id"`
+	PickupID  int     `json:"pickup_id"`
 	DeliverN  float64 `json:"deliver_N"`
 	DeliverE  float64 `json:"deliver_E"`
 	LandingID int     `json:"landing_id"`

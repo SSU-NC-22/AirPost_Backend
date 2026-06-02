@@ -9,7 +9,9 @@ import (
 // deliveryDispatcher publishes a delivery's flight request over MQTT. It is an
 // interface so handlers stay testable and the broker is optional in dev/tests.
 type deliveryDispatcher interface {
-	Dispatch(d *model.Delivery, takeoff, landing, tag *model.Node) error
+	Dispatch(d *model.Delivery, takeoff, pickup, landing, tag *model.Node) error
+	// IsDroneBusy reports whether a drone is mid-mission, so it is not double-booked.
+	IsDroneBusy(droneID int) bool
 }
 
 type Handler struct {

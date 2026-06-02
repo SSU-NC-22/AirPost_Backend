@@ -9,12 +9,12 @@ import (
 )
 
 func TestBuildDeliveryRequestMapping(t *testing.T) {
-	d := &model.Delivery{OrderNum: "AP-123"}
-	takeoff := &model.Node{ID: 2, LocLat: 37.0, LocLon: 127.0} // source station
+	d := &model.Delivery{OrderNum: "AP-123", DroneID: 51}
+	takeoff := &model.Node{ID: 2, LocLat: 37.0, LocLon: 127.0} // drone sits here (== pickup)
 	landing := &model.Node{ID: 7, LocLat: 37.5, LocLon: 127.5} // nearest dest station
 	tag := &model.Node{ID: 9, LocLat: 37.001, LocLon: 127.0}   // drop point, ~111m north
 
-	req := BuildDeliveryRequest(d, takeoff, landing, tag, 30)
+	req := BuildDeliveryRequest(d, takeoff, takeoff, landing, tag, 30)
 
 	if req.OrderID != "AP-123" {
 		t.Errorf("OrderID = %q, want AP-123", req.OrderID)
@@ -44,7 +44,7 @@ func TestBuildDeliveryRequestEastward(t *testing.T) {
 	takeoff := &model.Node{ID: 1, LocLat: 60.0, LocLon: 10.0}
 	tag := &model.Node{ID: 2, LocLat: 60.0, LocLon: 10.001} // 0.001 deg east
 
-	req := BuildDeliveryRequest(d, takeoff, takeoff, tag, 25)
+	req := BuildDeliveryRequest(d, takeoff, takeoff, takeoff, tag, 25)
 
 	if math.Abs(req.DeliverN) > 0.5 {
 		t.Errorf("DeliverN = %.2f m, want ~0 m", req.DeliverN)
@@ -55,11 +55,36 @@ func TestBuildDeliveryRequestEastward(t *testing.T) {
 	}
 }
 
+// TestBuildDeliveryRequestFerry verifies that when the drone is ferried in from a
+// different station, the delivery offset is measured from the PICKUP station (not
+// the take-off station) and both station ids are carried on the request.
+func TestBuildDeliveryRequestFerry(t *testing.T) {
+	d := &model.Delivery{OrderNum: "AP-ferry", DroneID: 53}
+	takeoff := &model.Node{ID: 3, LocLat: 37.2, LocLon: 127.3} // drone ferried from here
+	pickup := &model.Node{ID: 2, LocLat: 37.0, LocLon: 127.0}  // parcel source
+	landing := &model.Node{ID: 7, LocLat: 37.5, LocLon: 127.5}
+	tag := &model.Node{ID: 9, LocLat: 37.001, LocLon: 127.0} // ~111 m north of pickup
+
+	req := BuildDeliveryRequest(d, takeoff, pickup, landing, tag, 42)
+
+	if req.DroneID != 53 {
+		t.Errorf("DroneID = %d, want 53", req.DroneID)
+	}
+	if req.TakeoffID != 3 || req.PickupID != 2 {
+		t.Errorf("Takeoff/Pickup = %d/%d, want 3/2", req.TakeoffID, req.PickupID)
+	}
+	// Offset is from the pickup station, so ~111 m north / ~0 east regardless of takeoff.
+	if math.Abs(req.DeliverN-111.2) > 1.0 || math.Abs(req.DeliverE) > 0.5 {
+		t.Errorf("Deliver N/E = %.2f/%.2f, want ~111.2/~0 (relative to pickup)", req.DeliverN, req.DeliverE)
+	}
+}
+
 // TestDeliveryRequestJSONContract locks the JSON field names to the shared
 // contract consumed by airpost_service.py.
 func TestDeliveryRequestJSONContract(t *testing.T) {
 	req := DeliveryRequest{
-		OrderID: "AP-1", TakeoffID: 2, DeliverN: 75, DeliverE: 75, LandingID: 7, Cruise: 30,
+		OrderID: "AP-1", DroneID: 51, TakeoffID: 2, PickupID: 2,
+		DeliverN: 75, DeliverE: 75, LandingID: 7, Cruise: 30,
 	}
 	b, err := json.Marshal(req)
 	if err != nil {
@@ -70,7 +95,7 @@ func TestDeliveryRequestJSONContract(t *testing.T) {
 	if err := json.Unmarshal(b, &got); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	for _, key := range []string{"order_id", "takeoff_id", "deliver_N", "deliver_E", "landing_id", "cruise"} {
+	for _, key := range []string{"order_id", "drone_id", "takeoff_id", "pickup_id", "deliver_N", "deliver_E", "landing_id", "cruise"} {
 		if _, ok := got[key]; !ok {
 			t.Errorf("missing contract field %q in %s", key, b)
 		}
