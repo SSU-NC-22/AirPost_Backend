@@ -16,7 +16,7 @@ func NewDeliveryRepo() *deliveryRepo {
 	}
 }
 
-func (dlr *deliveryRepo) FindsByOrderNum(ordernum int) (dl model.Delivery, err error) {
+func (dlr *deliveryRepo) FindsByOrderNum(ordernum string) (dl model.Delivery, err error) {
 	return dl, dlr.db.Where("order_num=?", ordernum).Find(&dl).Error
 }
 

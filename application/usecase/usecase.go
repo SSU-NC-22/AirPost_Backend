@@ -36,7 +36,7 @@ type RegistUsecase interface {
 	RegistTopic(t *model.Topic) error
 	UnregistTopic(t *model.Topic) error
 
-	GetDeliveryByOrderNum(on int) (model.Delivery, error)
+	GetDeliveryByOrderNum(on string) (model.Delivery, error)
 	RegistDelivery(d *model.Delivery) error
 	UnregistDelivery(d *model.Delivery) error
 

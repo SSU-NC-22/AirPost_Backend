@@ -1,0 +1,278 @@
+# AirPost — full stack.
+#
+# `docker compose up --build` brings up the WHOLE system:
+#   infra : mysql, zookeeper+kafka, elasticsearch, kibana, mailhog, mosquitto (MQTT)
+#   Go    : application :8081, logic-core :8084, health-check :8083 (WS :8085)
+#   UI    : ui-next (Vite build, served by `vite preview`) on :4173
+#
+# The simulator (PX4 SITL + Gazebo) is NOT containerised here — it needs a GPU/GL
+# context and runs natively. It speaks the same MQTT contract on mosquitto:1883.
+# See ../simulation/README.md and ../docs/RUNBOOK.md.
+#
+# Quick start:
+#   docker compose up --build -d
+#   open http://localhost:4173   (UI)   /   http://localhost:8025 (MailHog)
+#
+# In-network service names (used by the Go services talking to each other / infra):
+#   mysql:3306  kafka:29092  elasticsearch:9200  mosquitto:1883  mailhog:1025
+# Host-exposed ports differ where noted (e.g. Kafka host port is 9092).
+
+services:
+  # ---- infrastructure ----------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: airpost-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: airpost
+      MYSQL_DATABASE: airpost
+      MYSQL_USER: airpost
+      MYSQL_PASSWORD: airpost
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - airpost
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-pairpost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: airpost-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - airpost
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: airpost-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Two listeners: in-network (kafka:29092) and host (localhost:9092).
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    networks:
+      - airpost
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  elasticsearch:
+    image: elasticsearch:7.6.1
+    container_name: airpost-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - cluster.name=elasticsearch
+      - node.name=es
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    networks:
+      - airpost
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 12
+
+  kibana:
+    image: kibana:7.6.1
+    container_name: airpost-kibana
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      SERVER_NAME: kibana
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - airpost
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5601/api/status || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 12
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: airpost-mailhog
+    ports:
+      - "1025:1025"   # SMTP (logic-core / application email actions -> here)
+      - "8025:8025"   # web UI to read captured "delivered" emails
+    networks:
+      - airpost
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:8025/ >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: airpost-mosquitto
+    # Inline config via command: anonymous listener on 1883 (dev/sim broker).
+    # The drone simulator and the application both speak this broker.
+    command: ["sh", "-c", "printf 'listener 1883 0.0.0.0\\nallow_anonymous true\\n' > /mosquitto/config/mosquitto.conf && exec /usr/sbin/mosquitto -c /mosquitto/config/mosquitto.conf"]
+    ports:
+      - "1883:1883"
+    networks:
+      - airpost
+    healthcheck:
+      # mosquitto_sub returns non-zero on a failed connect; a one-shot connect probes the broker.
+      test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/#' -C 1 -W 2 -h localhost >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+
+  # ---- Go services -------------------------------------------------------
+  application:
+    build:
+      context: ./application
+    container_name: airpost-application
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+      logic-core:
+        condition: service_started
+    environment:
+      APP_SERVER: "0.0.0.0:8081"
+      DB_DRIVER: mysql
+      DB_SERVER: "mysql:3306"
+      DB_USER: airpost
+      DB_PASS: airpost
+      DB_DATABASE: airpost
+      MQTT_BROKER: "tcp://mosquitto:1883"
+      # Delivered-email action -> MailHog.
+      SMTP_HOST: mailhog
+      SMTP_PORT: "1025"
+      SMTP_FROM: "airpost@localhost"
+      # Browser origin allowed by CORS (the UI's host URL).
+      UI_ORIGIN: "http://localhost:4173"
+      # Auth: dev secret + seeded accounts. Override in any real deployment.
+      JWT_SECRET: "dev-insecure-change-me"
+      ADMIN_EMAIL: "admin@airpost.local"
+      ADMIN_PASSWORD: "admin"
+      USER_EMAIL: "user@airpost.local"
+      USER_PASSWORD: "user"
+    ports:
+      - "8081:8081"
+    networks:
+      - airpost
+    healthcheck:
+      # /swagger redirects (302) when up; -f would fail on that, so accept any HTTP reply.
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:8081/swagger/index.html || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+
+  logic-core:
+    build:
+      context: ./logic-core
+    container_name: airpost-logic-core
+    depends_on:
+      kafka:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      mailhog:
+        condition: service_healthy
+    environment:
+      LOGIC_SERVER: "0.0.0.0:8084"
+      # Address application uses to call back this service over the network.
+      LOGIC_LISTEN: "logic-core:8084"
+      APP_SERVER: "application:8081"
+      KAFKA_BROKER: "kafka:29092"
+      KAFKA_TOPIC: "sensor-data"
+      ELASTIC_SERVER: "elasticsearch:9200"
+      SMTP_HOST: mailhog
+      SMTP_PORT: "1025"
+      SMTP_FROM: "airpost@localhost"
+    ports:
+      - "8084:8084"
+    networks:
+      - airpost
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:8084/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+
+  health-check:
+    build:
+      context: ./health-check
+    container_name: airpost-health-check
+    depends_on:
+      application:
+        condition: service_started
+    environment:
+      HEALTH_SERVER: "0.0.0.0:8083"
+      HEALTH_LISTEN: "0.0.0.0:8085"
+      APP_SERVER: "application:8081"
+    ports:
+      - "8083:8083"
+      - "8085:8085"
+    networks:
+      - airpost
+    healthcheck:
+      # WS endpoint returns 400 to a plain GET (missing Upgrade) -> service is up.
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:8083/health-check || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+
+  # ---- frontend ----------------------------------------------------------
+  ui-next:
+    build:
+      context: ../AirPost_UI/ui-next
+      # Browser-facing URLs are baked into the Vite bundle at build time.
+      args:
+        VITE_API_BASE: "http://localhost:8081"
+        VITE_WS_BASE: "ws://localhost:8085"
+        VITE_USE_MOCK: "false"
+    container_name: airpost-ui-next
+    depends_on:
+      application:
+        condition: service_started
+      health-check:
+        condition: service_started
+    ports:
+      - "4173:4173"
+    networks:
+      - airpost
+
+networks:
+  airpost:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  es-data:

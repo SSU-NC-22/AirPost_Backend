@@ -2,7 +2,6 @@ package adapter
 
 import (
 	"encoding/json"
-	"math"
 	"time"
 
 	"github.com/eunnseo/AirPost/logic-core/domain/model"
@@ -171,9 +170,7 @@ type Path struct {
 }
 
 func PathToModel(station *model.Node, tag *model.Node) (model.Path) {
-	powLon := math.Pow((station.Location.Lon - tag.Location.Lon), 2)
-	powLat := math.Pow((station.Location.Lat - tag.Location.Lat), 2)
-	dist := math.Pow((powLon + powLat), 0.5)
+	dist := Haversine(station.Location.Lat, station.Location.Lon, tag.Location.Lat, tag.Location.Lon)
 	return model.Path{
 		StationID: station.Nid,
 		TagID:	   tag.Nid,

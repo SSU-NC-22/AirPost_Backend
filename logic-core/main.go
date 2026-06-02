@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"runtime/trace"
 	"syscall"
 	"time"
 
@@ -27,21 +26,6 @@ import (
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-
-	// code for tracing goroutine
-	f, err := os.Create("trace.out")
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-	err = trace.Start(f)
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		fmt.Println("end")
-		trace.Stop()
-	}()
 
 	rr, AddrMap := memory.NewRegistRepo()
 

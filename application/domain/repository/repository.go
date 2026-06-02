@@ -49,7 +49,7 @@ type TopicRepo interface {
 }
 
 type DeliveryRepo interface {
-	FindsByOrderNum(ordernum int) (dl model.Delivery, err error)
+	FindsByOrderNum(ordernum string) (dl model.Delivery, err error)
 	Create(*model.Delivery) error
 	Delete(*model.Delivery) error
 }

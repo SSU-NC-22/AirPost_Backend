@@ -21,16 +21,16 @@ func Setup() {
 		panic(errors.New("DB connection fail"))
 	}
 
-	dbConn.AutoMigrate(
+	// AutoMigrate creates the foreign-key constraints declared via the
+	// `constraint:...` gorm tags on each model's associations (gorm v2 API).
+	// The old gorm v1 AddForeignKey() calls no longer exist, so the FKs are
+	// now expressed on the models themselves and enforced here.
+	if err = dbConn.AutoMigrate(
 		&model.Topic{}, &model.LogicService{},
 		&model.Sink{}, &model.Node{},
 		&model.SensorValue{}, &model.Logic{},
 		&model.Delivery{}, &model.Path{}, &model.StationDrone{},
-	)
-
-	// dbConn.Model(&model.LogicService{}).AddForeignKey("topic_id", "topics(id)", "CASCADE", "CASCADE")
-	// dbConn.Model(&model.Sink{}).AddForeignKey("topic_id", "topics(id)", "CASCADE", "CASCADE")
-	// dbConn.Model(&model.Node{}).AddForeignKey("sink_id", "sinks(id)", "CASCADE", "CASCADE")
-	// dbConn.Model(&model.SensorValue{}).AddForeignKey("sensor_id", "sensors(id)", "CASCADE", "CASCADE")
-	// dbConn.Model(&model.Logic{}).AddForeignKey("sensor_id", "sensors(id)", "CASCADE", "CASCADE")
+	); err != nil {
+		panic(errors.New("DB migration failed: " + err.Error()))
+	}
 }

@@ -7,8 +7,10 @@ import (
 	"log"
 	"net/http"
 	"net/smtp"
+	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/eunnseo/AirPost/logic-core/adapter"
@@ -16,20 +18,45 @@ import (
 	"github.com/eunnseo/AirPost/logic-core/setting"
 )
 
-const (
-	GoogleSMTPServer = "smtp.gmail.com"
-	from = "REDACTED"
-	pass = ""
+// SMTP settings are read from the environment so no credentials are committed
+// in source. Defaults target a local MailHog instance for development; set
+// SMTP_HOST/SMTP_PORT and SMTP_FROM/SMTP_PASS for production (e.g. Gmail).
+var (
+	from     = getenv("SMTP_FROM", "airpost@localhost")
+	pass     = os.Getenv("SMTP_PASS")
+	smtpHost = getenv("SMTP_HOST", "localhost")
+	smtpPort = getenv("SMTP_PORT", "1025")
 )
+
+// getenv returns the env var value or a fallback when it is unset.
+func getenv(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
+}
+
+// sendMail delivers a message via the configured SMTP server. Auth is used only
+// when a password is set, so unauthenticated dev servers like MailHog work.
+func sendMail(to []string, msg string) error {
+	addr := smtpHost + ":" + smtpPort
+	var auth smtp.Auth
+	if pass != "" {
+		auth = smtp.PlainAuth("", from, pass, smtpHost)
+	}
+	return smtp.SendMail(addr, auth, from, to, []byte(msg))
+}
 
 type EmailElement struct {
 	BaseElement
 	Email    string `json:"text"`
 	Interval map[string]bool
+	mu       sync.Mutex
 }
 
 func (ee *EmailElement) Exec(d *model.LogicData) {
 	log.Println("\t!!!!in EmailElement.Exec !!!!")
+	ee.mu.Lock()
 	ok, exist := ee.Interval[d.Node.Name]
 
 	if !exist {
@@ -37,6 +64,7 @@ func (ee *EmailElement) Exec(d *model.LogicData) {
 	}
 	if ok {
 		ee.Interval[d.Node.Name] = false
+		ee.mu.Unlock()
 
 		to := []string{ee.Email}
 		body := fmt.Sprintf("node(%s)", d.Node.Name)
@@ -44,9 +72,7 @@ func (ee *EmailElement) Exec(d *model.LogicData) {
 			"To: " + strings.Join(to, ",") + "\n" +
 			"Subject: AirPost email\n" + body
 
-		err := smtp.SendMail(GoogleSMTPServer + ":587",
-			smtp.PlainAuth("", from, pass, GoogleSMTPServer),
-			from, to, []byte(msg))
+		err := sendMail(to, msg)
 
 		if err != nil {
 			fmt.Printf("smtp error: %s\n", err)
@@ -57,8 +83,12 @@ func (ee *EmailElement) Exec(d *model.LogicData) {
 		tick := time.NewTicker(10 * time.Second)
 		go func() {
 			<-tick.C
+			ee.mu.Lock()
 			ee.Interval[d.Node.Name] = true
+			ee.mu.Unlock()
 		}()
+	} else {
+		ee.mu.Unlock()
 	}
 	ee.BaseElement.Exec(d)
 }
@@ -72,6 +102,7 @@ type ActuatorElement struct {
 		Sleep int `json:"sleep"`
 	} `json:"values"`
 	Interval map[string]bool
+	mu       sync.Mutex
 }
 
 type Actuator struct {
@@ -85,12 +116,14 @@ type Actuator struct {
 
 func (ae *ActuatorElement) Exec(d *model.LogicData) {
 	log.Println("\t!!!!in ActuatorElement.Exec !!!!")
+	ae.mu.Lock()
 	ok, exist := ae.Interval[d.Node.Name]
 	if !exist {
 		ae.Interval[d.Node.Name] = true
 	}
 	if ok {
 		ae.Interval[d.Node.Name] = false
+		ae.mu.Unlock()
 		go func() {
 			
 			res := Actuator{
@@ -113,8 +146,12 @@ func (ae *ActuatorElement) Exec(d *model.LogicData) {
 		tick := time.NewTicker(1 * time.Second)
 		go func() {
 			<-tick.C
+			ae.mu.Lock()
 			ae.Interval[d.Node.Name] = true
+			ae.mu.Unlock()
 		}()
+	} else {
+		ae.mu.Unlock()
 	}
 	ae.BaseElement.Exec(d)
 }
@@ -183,9 +220,7 @@ func (ae *AlarmElement) Exec(d *model.LogicData) {
 		"To: " + strings.Join(to, ",") + "\n" +
 		"Subject: " + subject + "\n\n" + body
 
-	err := smtp.SendMail(GoogleSMTPServer + ":587",
-		smtp.PlainAuth("", from, pass, GoogleSMTPServer),
-		from, to, []byte(msg))
+	err := sendMail(to, msg)
 
 	if err != nil {
 		log.Panicln("smtp send error: ", err)

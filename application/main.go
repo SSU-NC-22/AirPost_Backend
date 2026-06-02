@@ -3,8 +3,11 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/eunnseo/AirPost/application/dataService/sql"
+	"github.com/eunnseo/AirPost/application/delivery"
+	deliverymqtt "github.com/eunnseo/AirPost/application/delivery/mqtt"
 	"github.com/eunnseo/AirPost/application/docs"
 	"github.com/eunnseo/AirPost/application/domain/model"
 	"github.com/eunnseo/AirPost/application/domain/repository"
@@ -39,8 +42,15 @@ func main() {
 	h := handler.NewHandler(ru, eu)
 
 	r := gin.Default()
+	// CORS: a wildcard origin "*" combined with AllowCredentials:true is
+	// invalid per the Fetch spec and is rejected by browsers. Restrict to a
+	// real UI origin (configurable via the UI_ORIGIN env var).
+	uiOrigin := os.Getenv("UI_ORIGIN")
+	if uiOrigin == "" {
+		uiOrigin = "http://localhost:3000"
+	}
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{"*"}
+	config.AllowOrigins = []string{uiOrigin}
 	config.AllowCredentials = true
 	r.Use(cors.New(config))
 
@@ -49,6 +59,22 @@ func main() {
 	docs.SwaggerInfo.Description = "This is a registration server for AirPost UI."
 	docs.SwaggerInfo.Version = "0.1"
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Wire MQTT so RegistDelivery publishes flight requests and status updates
+	// (delivered -> email) are handled. A broker failure is logged but does not
+	// stop the API: deliveries are still recorded.
+	if dispatcher := setupDelivery(ru); dispatcher != nil {
+		h.SetDeliveryDispatcher(dispatcher)
+	}
+
+	// Public route: login issues JWTs and must not itself require one.
+	r.POST("/auth/login", h.Login)
+
+	// All routes below require a valid JWT when auth is enabled (default ON).
+	// Set AUTH_ENABLED=0 to disable for tests/dev.
+	if handler.AuthEnabled() {
+		r.Use(handler.JWTAuthMiddleware())
+	}
 
 	setRegistrationRoute(r, h)
 	setEventRoute(r, h)
@@ -61,8 +87,18 @@ func main() {
 	log.Fatal(r.Run(setting.Appsetting.Server))
 }
 
+// adminOnly gates a route group to admin callers when auth is enabled. When
+// auth is off (tests/dev) it is a no-op so the group stays usable.
+func adminOnly() gin.HandlerFunc {
+	if handler.AuthEnabled() {
+		return handler.RequireRole(handler.RoleAdmin)
+	}
+	return func(c *gin.Context) { c.Next() }
+}
+
 func setEventRoute(r *gin.Engine, h *handler.Handler) {
-	event := r.Group("/event")
+	// Logic-service registration is infrastructure: admin only.
+	event := r.Group("/event", adminOnly())
 	{
 		event.POST("", h.RegistLogicService)
 	}
@@ -71,14 +107,14 @@ func setEventRoute(r *gin.Engine, h *handler.Handler) {
 func setRegistrationRoute(r *gin.Engine, h *handler.Handler) {
 	regist := r.Group("/regist")
 	{
-
-		sink := regist.Group("/sink")
+		// Infrastructure CRUD (sinks, nodes, logic, topics) is admin only.
+		sink := regist.Group("/sink", adminOnly())
 		{
 			sink.GET("", h.ListSinks)
 			sink.POST("", h.RegistSink)
 			sink.DELETE("/:id", h.UnregistSink)
 		}
-		node := regist.Group("/node")
+		node := regist.Group("/node", adminOnly())
 		{
 			node.GET("", h.ListNodes)
 			node.GET("/:sinkid", h.ListNodesBySink)
@@ -86,23 +122,25 @@ func setRegistrationRoute(r *gin.Engine, h *handler.Handler) {
 			node.POST("/update", h.UpdateNodeLoc)
 			node.DELETE("/:id", h.UnregistNode)
 		}
-		logic := regist.Group("/logic")
+		logic := regist.Group("/logic", adminOnly())
 		{
 			logic.GET("", h.ListLogics)
 			logic.POST("", h.RegistLogic) // << 프론트에서
 			logic.DELETE("/:id", h.UnregistLogic)
 		}
-		logicService := regist.Group("/logic-service")
+		logicService := regist.Group("/logic-service", adminOnly())
 		{
 			logicService.GET("", h.ListLogicServices)
 			logicService.DELETE("/:id", h.UnregistLogicService)
 		}
-		topic := regist.Group("/topic")
+		topic := regist.Group("/topic", adminOnly())
 		{
 			topic.GET("", h.ListTopics)
 			topic.POST("", h.RegistTopic)
 			topic.DELETE("/:id", h.UnregistTopic)
 		}
+		// Deliveries and tracking are usable by any authenticated user; the
+		// handlers enforce per-record ownership (or admin) on reads.
 		delivery := regist.Group("/delivery")
 		{
 			delivery.GET("/:orderNum", h.GetDroneID)
@@ -112,7 +150,24 @@ func setRegistrationRoute(r *gin.Engine, h *handler.Handler) {
 		{
 			tracking.GET("/:orderNum", h.GetTracking)
 		}
-	}  
+	}
+}
+
+// setupDelivery connects to the MQTT broker, subscribes to delivery status
+// updates, and returns a Dispatcher for publishing flight requests. It returns
+// nil (logging the cause) if the broker is unreachable, so the API still runs.
+func setupDelivery(ru usecase.RegistUsecase) *delivery.Dispatcher {
+	client, err := deliverymqtt.NewClient("airpost-application")
+	if err != nil {
+		log.Printf("delivery: MQTT disabled, broker unavailable: %v", err)
+		return nil
+	}
+
+	dispatcher := delivery.NewDispatcher(client, ru)
+	if err := client.SubscribeStatus(dispatcher.HandleStatus); err != nil {
+		log.Printf("delivery: status subscription failed: %v", err)
+	}
+	return dispatcher
 }
 
 func initTopic(tpr repository.TopicRepo) {

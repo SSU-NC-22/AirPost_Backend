@@ -1,13 +1,15 @@
 package registUsecase
 
 import (
+	"errors"
+
 	"github.com/eunnseo/AirPost/application/domain/model"
 )
 
 /**************************************************************/
 /* delivery regist usecase                                    */
 /**************************************************************/
-func (ru *registUsecase) GetDeliveryByOrderNum(on int) (model.Delivery, error) {
+func (ru *registUsecase) GetDeliveryByOrderNum(on string) (model.Delivery, error) {
 	return ru.dlr.FindsByOrderNum(on)
 }
 
@@ -27,10 +29,22 @@ func (ru *registUsecase) GetShortestPathStation(tagid int) (station *model.Node,
 	if err != nil {
 		return nil, err
 	}
-	min := pl[0].Distance
-	nid := pl[0].StationID
-	for _, path := range(pl) {
-		if (path.Distance < min) {
+
+	// Only consider paths that belong to the requested tag.
+	var candidates []model.Path
+	for _, path := range pl {
+		if path.TagID == tagid {
+			candidates = append(candidates, path)
+		}
+	}
+	if len(candidates) == 0 {
+		return nil, errors.New("no path found for the given tag id")
+	}
+
+	min := candidates[0].Distance
+	nid := candidates[0].StationID
+	for _, path := range candidates {
+		if path.Distance < min {
 			min = path.Distance
 			nid = path.StationID
 		}

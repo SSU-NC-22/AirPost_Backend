@@ -5,8 +5,8 @@ type Topic struct {
 	Name          string         `json:"name" gorm:"type:varchar(32);unique;not null"`
 	Partitions    int            `json:"partitions"`
 	Replications  int            `json:"replications"`
-	Sinks         []Sink         `json:"sinks" gorm:"foreignKey:TopicID"`
-	LogicServices []LogicService `json:"logic_services" gorm:"foreignKey:TopicID"`
+	Sinks         []Sink         `json:"sinks" gorm:"foreignKey:TopicID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	LogicServices []LogicService `json:"logic_services" gorm:"foreignKey:TopicID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func (Topic) TableName() string {
