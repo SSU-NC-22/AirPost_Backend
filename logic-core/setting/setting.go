@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 func GetenvInt(target *int, init int, env string) {
@@ -93,11 +94,14 @@ type Elastic struct {
 }
 
 func (es *Elastic) Getenv() {
-	temp := os.Getenv("ELASTIC_SERVER")
+	temp := os.Getenv("ELASTICSEARCH_URL")
 	if temp == "" {
-		temp = "0.0.0.0:9200"
+		temp = os.Getenv("ELASTIC_SERVER")
 	}
-	es.Addresses = []string{fmt.Sprintf("http://%s", temp)}
+	if temp == "" {
+		temp = "localhost:9200"
+	}
+	es.Addresses = elasticAddresses(temp)
 	GetenvInt(&es.RequestRetry, 3, "ELASTIC_RETRY")
 	GetenvInt(&es.ChanBufSize, 500, "ELASTIC_BUFSIZE")
 	GetenvInt(&es.BatchTicker, 5, "ELASTIC_BATCHTICKER")
@@ -105,6 +109,25 @@ func (es *Elastic) Getenv() {
 }
 
 var Elasticsetting = &Elastic{}
+
+func elasticAddresses(raw string) []string {
+	parts := strings.Split(raw, ",")
+	addresses := make([]string, 0, len(parts))
+	for _, part := range parts {
+		address := strings.TrimSpace(part)
+		if address == "" {
+			continue
+		}
+		if !strings.HasPrefix(address, "http://") && !strings.HasPrefix(address, "https://") {
+			address = fmt.Sprintf("http://%s", address)
+		}
+		addresses = append(addresses, address)
+	}
+	if len(addresses) == 0 {
+		return []string{"http://localhost:9200"}
+	}
+	return addresses
+}
 
 func init() {
 	Logicsetting.Getenv()

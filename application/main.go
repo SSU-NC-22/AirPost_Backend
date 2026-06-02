@@ -91,6 +91,11 @@ func main() {
 	initStationSink(sir, eu)
 	initTagSink(sir, eu)
 
+	// Seed a usable demo topology (stations, drones, tags, station-drone links,
+	// paths) once the sinks exist, so a fresh `compose up` flies real sorties with
+	// no manual setup. Idempotent; skipped when SEED_DEMO=0.
+	sql.Seed()
+
 	log.Fatal(r.Run(setting.Appsetting.Server))
 }
 

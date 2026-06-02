@@ -1,7 +1,7 @@
 # AirPost — full stack.
 #
 # `docker compose up --build` brings up the WHOLE system:
-#   infra : mysql, zookeeper+kafka, elasticsearch, kibana, mailhog, mosquitto (MQTT)
+#   infra : mysql, kafka, elasticsearch, kibana, mailhog, mosquitto (MQTT)
 #   Go    : application :8081, logic-core :8084, health-check :8083 (WS :8085)
 #   UI    : ui-next (Vite build, served by `vite preview`) on :4173
 #
@@ -25,7 +25,7 @@ name: airpost
 services:
   # ---- infrastructure ----------------------------------------------------
   mysql:
-    image: mysql:8.0
+    image: mysql:8.4.9
     container_name: airpost-mysql
     environment:
       MYSQL_ROOT_PASSWORD: airpost
@@ -44,59 +44,47 @@ services:
       timeout: 5s
       retries: 10
 
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: airpost-zookeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-      # Allow the "ruok" four-letter word so the healthcheck below works (ZK only
-      # whitelists "srvr" by default, which made it report unhealthy and blocked
-      # kafka/logic-core from starting via `compose up`).
-      ZOOKEEPER_4LW_COMMANDS_WHITELIST: "ruok,srvr"
-    ports:
-      - "2181:2181"
-    networks:
-      - airpost
-    healthcheck:
-      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
   kafka:
-    image: confluentinc/cp-kafka:7.5.0
+    image: apache/kafka:4.3.0
     container_name: airpost-kafka
-    depends_on:
-      zookeeper:
-        condition: service_healthy
+    hostname: kafka
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      # Two listeners: in-network (kafka:29092) and host (localhost:9092).
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      # Two client listeners: in-network (kafka:29092) and host (localhost:9092).
       KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
-      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: CONTROLLER://:29093,INTERNAL://:29092,EXTERNAL://:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      CLUSTER_ID: "4L6g3nShT-eMCtK--X86sw"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_DIRS: "/tmp/kraft-combined-logs"
     ports:
       - "9092:9092"
     networks:
       - airpost
     healthcheck:
-      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null"]
       interval: 10s
       timeout: 10s
       retries: 12
 
   elasticsearch:
-    image: elasticsearch:7.6.1
+    image: elasticsearch:9.4.1
     container_name: airpost-elasticsearch
     environment:
       - discovery.type=single-node
       - cluster.name=elasticsearch
       - node.name=es
+      - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
       - "9200:9200"
@@ -111,7 +99,7 @@ services:
       retries: 12
 
   kibana:
-    image: kibana:7.6.1
+    image: kibana:9.4.1
     container_name: airpost-kibana
     depends_on:
       elasticsearch:
@@ -119,6 +107,7 @@ services:
     environment:
       SERVER_NAME: kibana
       ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      XPACK_SECURITY_ENABLED: "false"
     ports:
       - "5601:5601"
     networks:

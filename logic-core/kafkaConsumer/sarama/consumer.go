@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/eunnseo/AirPost/logic-core/adapter"
 	"github.com/eunnseo/AirPost/logic-core/domain/model"
 	"github.com/eunnseo/AirPost/logic-core/setting"
@@ -31,7 +31,7 @@ func NewKafkaConsumer() *group {
 	}
 
 	cfg := sarama.NewConfig()
-	cfg.Version = sarama.V0_10_2_0
+	cfg.Version = sarama.V4_0_0_0
 	cfg.Consumer.Offsets.Initial = sarama.OffsetNewest
 
 	kafkaConsumer.client, err = sarama.NewConsumerGroup([]string{setting.Kafkasetting.Broker}, setting.Kafkasetting.GroupID, cfg)
@@ -83,7 +83,7 @@ func (consumer *consumer) Cleanup(sarama.ConsumerGroupSession) error {
 
 func (consumer *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for message := range claim.Messages() {
-		
+
 		fmt.Println("\n\nkafka consumer :", string(message.Value))
 		ad := adapter.KafkaData{}
 		if err := json.Unmarshal(message.Value, &ad); err != nil {
@@ -96,7 +96,7 @@ func (consumer *consumer) ConsumeClaim(session sarama.ConsumerGroupSession, clai
 			log.Print(err)
 			continue
 		}
-		
+
 		consumer.out <- d // go to "in" in NewLogicCoreUsecase logicCoreUsecase.go
 	}
 

@@ -1,53 +1,57 @@
 package elasticClient
 
 import (
+	"fmt"
+	"io"
 	"strings"
 	"time"
 
-	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v9"
 	"github.com/eunnseo/AirPost/logic-core/domain/model"
 	"github.com/eunnseo/AirPost/logic-core/setting"
-	"github.com/go-resty/resty/v2"
 )
 
 var (
-	elasticClient *client
-	template      = `
+	elasticClient     *client
+	indexTemplateName = "airpost_sensor_template"
+	indexTemplate     = `
 {
 	"index_patterns": [
 	  "21th*"
 	],
-	"settings": {
-	  "number_of_shards": 1
-	},
-	"mappings" : {
-	  "properties" : {
-		"name" : {
-		  "type" : "keyword"
+	"template": {
+		"settings": {
+		  "number_of_shards": 1
 		},
-		"node" : {
+		"mappings" : {
 		  "properties" : {
-			"sink_name" : {
-			  "type" : "keyword"
-			},
-			"location" : {
-			  "type": "geo_point"
-			},
 			"name" : {
 			  "type" : "keyword"
+			},
+			"node" : {
+			  "properties" : {
+				"sink_name" : {
+				  "type" : "keyword"
+				},
+				"location" : {
+				  "type": "geo_point"
+				},
+				"name" : {
+				  "type" : "keyword"
+				}
+			  }
+			},
+			"sensor_id" : {
+			  "type" : "long"
+			},
+			"sensor_name" : {
+			  "type" : "keyword"
+			},
+			"timestamp" : {
+			  "type" : "date"
 			}
 		  }
-		},
-		"sensor_id" : {
-		  "type" : "long"
-		},
-		"sensor_name" : {
-		  "type" : "keyword"
-		},
-		"timestamp" : {
-		  "type" : "date"
 		}
-	  }
 	}
 }
 `
@@ -76,13 +80,9 @@ func NewElasticClient() *client {
 	if err != nil {
 		panic(err)
 	}
-
-	putTemplate := resty.New()
-
-	putTemplate.R().
-		SetHeader("Content-Type", "application/json").
-		SetBody([]byte(template)).
-		Put("http://10.5.110.38:9200/_doc/template_1")
+	if err = putIndexTemplate(cli); err != nil {
+		panic(err)
+	}
 
 	elasticClient = &client{
 		es:      cli,
@@ -97,18 +97,32 @@ func NewElasticClient() *client {
 	return elasticClient
 }
 
+func putIndexTemplate(cli *elasticsearch.Client) error {
+	res, err := cli.Indices.PutIndexTemplate(indexTemplateName, strings.NewReader(indexTemplate))
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	if res.IsError() {
+		body, _ := io.ReadAll(res.Body)
+		return fmt.Errorf("put Elasticsearch index template %s failed: %s: %s", indexTemplateName, res.Status(), strings.TrimSpace(string(body)))
+	}
+
+	return nil
+}
+
 func (ec *client) run() {
 	for {
 		select {
 		case doc := <-ec.in:
-			
+
 			ec.insertDoc(&doc)
 		case <-ec.ticker.C:
 			ec.bulk()
 		}
 	}
 }
-
 
 func (ec *client) GetInput() chan<- model.Document {
 	if ec != nil {
@@ -124,23 +138,18 @@ func (ec *client) insertDoc(d *model.Document) {
 	}
 }
 
-
-
 func (ec *client) bulk() {
 	if len(ec.docBuf) > 0 {
 		bulkStr := strings.Join(docsToSlice(ec.docBuf), "")
-		
+
 		// debug
 		//fmt.Printf("elastic : %v\n", bulkStr)
-		bulkStr=strings.ToLower(bulkStr)
+		bulkStr = strings.ToLower(bulkStr)
 		res, _ := ec.es.Bulk(strings.NewReader(bulkStr))
 		res.Body.Close()
 		ec.docBuf = make([]*model.Document, 0, ec.bufSize)
 	}
 }
-
-
-
 
 func docsToSlice(docs []*model.Document) []string {
 	res := make([]string, len(docs))
