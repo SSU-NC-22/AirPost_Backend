@@ -52,6 +52,9 @@ func main() {
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{uiOrigin}
 	config.AllowCredentials = true
+	// The default allow-headers omit Authorization, so the browser's preflight blocked every
+	// authenticated admin request (the JWT rides in the Authorization header). Allow it.
+	config.AllowHeaders = []string{"Origin", "Content-Type", "Authorization"}
 	r.Use(cors.New(config))
 
 	// swagger
@@ -70,6 +73,11 @@ func main() {
 	// Public route: login issues JWTs and must not itself require one.
 	r.POST("/auth/login", h.Login)
 
+	// /event is service-to-service infrastructure (logic-core self-registers here at startup with
+	// no user JWT). Register it BEFORE the global JWT middleware so it is not gated by user auth —
+	// otherwise logic-core gets 401 and crash-loops. Reached only over the internal network in prod.
+	setEventRoute(r, h)
+
 	// All routes below require a valid JWT when auth is enabled (default ON).
 	// Set AUTH_ENABLED=0 to disable for tests/dev.
 	if handler.AuthEnabled() {
@@ -77,7 +85,6 @@ func main() {
 	}
 
 	setRegistrationRoute(r, h)
-	setEventRoute(r, h)
 	initTopic(tpr)
 
 	initDroneSink(sir, eu)
@@ -97,8 +104,11 @@ func adminOnly() gin.HandlerFunc {
 }
 
 func setEventRoute(r *gin.Engine, h *handler.Handler) {
-	// Logic-service registration is infrastructure: admin only.
-	event := r.Group("/event", adminOnly())
+	// Logic-service registration is service-to-service infrastructure (logic-core calls this at
+	// startup with no user JWT). It must NOT sit behind the user adminOnly() gate — doing so
+	// returned 401 and crash-looped logic-core. In a real deployment this route is reached only
+	// over the internal network, not exposed publicly.
+	event := r.Group("/event")
 	{
 		event.POST("", h.RegistLogicService)
 	}
