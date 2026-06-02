@@ -14,7 +14,14 @@ var (
 )
 
 func init() {
-	loc, _ = time.LoadLocation("Asia/Seoul")
+	// Minimal container images carry no OS tzdata, so LoadLocation would return nil and
+	// ParseInLocation(nil) panics on every telemetry message. Fall back to UTC if the zone
+	// can't be resolved (time/tzdata is also embedded in main to make this resolve normally).
+	if l, err := time.LoadLocation("Asia/Seoul"); err == nil {
+		loc = l
+	} else {
+		loc = time.UTC
+	}
 	timeFmt = "2006-01-02 15:04:05"
 }
 

@@ -1,8 +1,6 @@
 package logicCoreUC
 
 import (
-	"log"
-
 	"github.com/eunnseo/AirPost/logic-core/adapter"
 	"github.com/eunnseo/AirPost/logic-core/domain/repository"
 	"github.com/eunnseo/AirPost/logic-core/domain/service"
@@ -34,26 +32,20 @@ func NewLogicCoreUsecase(rr repository.RegistRepo,
 
 			ld, err := lcu.ToLogicData(&rawData) // 데이터 보강
 			if err != nil {
-				continue
+				continue // unknown node or value/schema mismatch
 			}
 
-			lchs, err := lcu.ls.GetLogicChans(ld.NodeID)
-			if err != nil {
-				if ld.Node.Type == "DRO" {
-					log.Println("it's drone") // delivery 없음
-					continue
-				} else {
-					panic(err)
-				}
-			}
-			if err == nil {
+			// Route to any active logic chains for this node (delivery tracking, arrival
+			// alarms). Plain telemetry has no logic attached — that is normal, not an error.
+			if lchs, err := lcu.ls.GetLogicChans(ld.NodeID); err == nil {
 				for _, ch := range lchs {
 					if len(ch) != cap(ch) {
 						ch <- ld // go to "listen" in CreateAndStartLogic core.go
 					}
 				}
 			}
-			out <- lcu.ToDocument(&ld) // go to elastic client
+
+			out <- lcu.ToDocument(&ld) // always archive the reading to Elasticsearch
 		}
 	}()
 

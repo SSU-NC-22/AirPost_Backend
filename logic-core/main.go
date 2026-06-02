@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"syscall"
 	"time"
+	_ "time/tzdata" // embed the timezone database so LoadLocation works in minimal containers
 
 	"github.com/eunnseo/AirPost/logic-core/adapter"
 	"github.com/eunnseo/AirPost/logic-core/dataService/memory"

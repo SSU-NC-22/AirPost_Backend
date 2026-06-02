@@ -41,6 +41,16 @@ const (
 	tagDropNorthM = 12 // each tag sits this many meters north of its home station
 )
 
+// Sensor schemas per node type: the ordered value names a node's telemetry array
+// carries (index = position). logic-core maps an incoming values[] onto these names
+// before indexing into Elasticsearch, so telemetry must be published in this order.
+// They mirror the field order documented in logic-core/kafkaProducer/producer.py.
+var sensorSchema = map[string][]string{
+	"drone":   {"lat", "long", "alt", "velocity", "batteryPer", "done"},
+	"station": {"temperature", "humidity", "light", "lat", "long", "alt"},
+	"tag":     {"lat", "long", "alt"},
+}
+
 // stationEN are the local east/north meters of stations 1..fleetSize, copied from
 // simulation/tests/airpost_sites.json (validated clear helipads, well separated so
 // the drones spawn at distinct positions). Index 0 is station ID 1.
@@ -81,6 +91,7 @@ func Seed() {
 
 	var (
 		nodes   []model.Node
+		sensors []model.SensorValue
 		links   []model.StationDrone
 		paths   []model.Path
 		pathID  = 1
@@ -89,6 +100,13 @@ func Seed() {
 		tagLat  [fleetSize]float64
 		tagLon  [fleetSize]float64
 	)
+
+	// addSensors records a node's telemetry value schema (ordered by index).
+	addSensors := func(nodeID int, kind string) {
+		for i, name := range sensorSchema[kind] {
+			sensors = append(sensors, model.SensorValue{NodeID: nodeID, ValueName: name, Index: i})
+		}
+	}
 
 	for i := 0; i < fleetSize; i++ {
 		id := i + 1
@@ -109,6 +127,10 @@ func Seed() {
 			model.Node{ID: tagID, Name: fmt.Sprintf("tag-%d", id), Type: "tag",
 				LocLat: tLat, LocLon: tLon, SinkID: sinkTag},
 		)
+		addSensors(id, "station")
+		addSensors(droneID, "drone")
+		addSensors(tagID, "tag")
+
 		// One usable drone parked on each station.
 		links = append(links, model.StationDrone{StationID: id, DroneID: droneID, Usable: true})
 	}
@@ -135,9 +157,10 @@ func Seed() {
 		}
 	}
 	create("nodes", &nodes)
+	create("sensor_values", &sensors)
 	create("station_drone", &links)
 	create("paths", &paths)
 
-	log.Printf("seed: demo topology ready (%d stations, %d drones, %d tags, %d paths)",
-		fleetSize, fleetSize, fleetSize, len(paths))
+	log.Printf("seed: demo topology ready (%d stations, %d drones, %d tags, %d paths, %d sensor values)",
+		fleetSize, fleetSize, fleetSize, len(paths), len(sensors))
 }

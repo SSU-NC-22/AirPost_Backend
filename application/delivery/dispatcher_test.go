@@ -15,7 +15,13 @@ func (s *stubPublisher) PublishRequest(r deliverymqtt.DeliveryRequest) error {
 }
 
 func newTestDispatcher() *Dispatcher {
-	return &Dispatcher{publisher: &stubPublisher{}, bands: make(map[string]int)}
+	return &Dispatcher{
+		publisher:  &stubPublisher{},
+		bands:      make(map[string]int),
+		orderDrone: make(map[string]int),
+		busy:       make(map[int]bool),
+		notified:   make(map[string]bool),
+	}
 }
 
 // TestBandsAreDistinctAndReused checks the control-tower deconfliction: concurrent

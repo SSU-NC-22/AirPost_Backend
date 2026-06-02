@@ -45,8 +45,9 @@ type Dispatcher struct {
 	mu         sync.Mutex
 	bands      map[string]int // order_id -> altitude band slot
 	used       []bool         // band slot -> in use
-	orderDrone map[string]int // order_id -> drone id (to free the drone on landing)
-	busy       map[int]bool   // drone id -> in flight (skipped when assigning)
+	orderDrone map[string]int  // order_id -> drone id (to free the drone on landing)
+	busy       map[int]bool    // drone id -> in flight (skipped when assigning)
+	notified   map[string]bool // order_id -> recipient already emailed
 }
 
 // NewDispatcher builds a Dispatcher from a publisher and a delivery lookup.
@@ -58,7 +59,20 @@ func NewDispatcher(publisher requestPublisher, lookup deliveryLookup) *Dispatche
 		bands:      make(map[string]int),
 		orderDrone: make(map[string]int),
 		busy:       make(map[int]bool),
+		notified:   make(map[string]bool),
 	}
+}
+
+// firstNotify reports whether this is the first delivered-notification for an order
+// (and records it), so the recipient is emailed exactly once.
+func (d *Dispatcher) firstNotify(orderID string) bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.notified[orderID] {
+		return false
+	}
+	d.notified[orderID] = true
+	return true
 }
 
 // Dispatch maps the delivery and its resolved stations/tag to the MQTT request,
@@ -159,7 +173,9 @@ func (d *Dispatcher) HandleStatus(status deliverymqtt.DeliveryStatus) {
 		d.freeDrone(status.OrderID)
 	}
 
-	if !status.IsDelivered() {
+	// The sim signals success twice (mid-flight "delivered" and the terminal "PASS"),
+	// both of which count as delivered; email the recipient only once per order.
+	if !status.IsDelivered() || !d.firstNotify(status.OrderID) {
 		return
 	}
 
