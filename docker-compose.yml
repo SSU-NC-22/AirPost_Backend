@@ -17,6 +17,11 @@
 #   mysql:3306  kafka:29092  elasticsearch:9200  mosquitto:1883  mailhog:1025
 # Host-exposed ports differ where noted (e.g. Kafka host port is 9092).
 
+# Pin the Compose project name so it stays "airpost" regardless of the directory
+# name (the repo dir is AirPost_Backend); otherwise containers/volumes would be
+# recreated under a new project on rename.
+name: airpost
+
 services:
   # ---- infrastructure ----------------------------------------------------
   mysql:
@@ -45,6 +50,10 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+      # Allow the "ruok" four-letter word so the healthcheck below works (ZK only
+      # whitelists "srvr" by default, which made it report unhealthy and blocked
+      # kafka/logic-core from starting via `compose up`).
+      ZOOKEEPER_4LW_COMMANDS_WHITELIST: "ruok,srvr"
     ports:
       - "2181:2181"
     networks:
