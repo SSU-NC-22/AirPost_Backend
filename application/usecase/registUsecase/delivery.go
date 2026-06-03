@@ -2,9 +2,13 @@ package registUsecase
 
 import (
 	"errors"
+	"math"
 
 	"github.com/eunnseo/AirPost/application/domain/model"
 )
+
+// stationSinkID is the sink that classifies station nodes (mirrors handler STATION).
+const stationSinkID = 2
 
 /**************************************************************/
 /* delivery regist usecase                                    */
@@ -24,36 +28,34 @@ func (ru *registUsecase) UnregistDelivery(d *model.Delivery) error {
 /**************************************************************/
 /* path regist usecase                                        */
 /**************************************************************/
-func (ru *registUsecase) GetShortestPathStation(tagid int) (station *model.Node, err error) {
-	pl, err := ru.ptr.Finds()
+// GetShortestPathStation returns the station nearest the drop tag — computed
+// GEOMETRICALLY from the registered node coordinates (haversine), so it works for
+// any dynamically self-registered topology with NO pre-seeded Path rows. (The old
+// implementation required hardcoded tag->station Path distances; that coupling is
+// removed so IoT devices that register themselves are immediately routable.)
+func (ru *registUsecase) GetShortestPathStation(tagid int) (*model.Node, error) {
+	tag, err := ru.ndr.FindsByID(tagid)
+	if err != nil {
+		return nil, err
+	}
+	stations, err := ru.ndr.FindsBySinkIDWithSensorValues(stationSinkID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Only consider paths that belong to the requested tag.
-	var candidates []model.Path
-	for _, path := range pl {
-		if path.TagID == tagid {
-			candidates = append(candidates, path)
+	var nearest *model.Node
+	best := math.MaxFloat64
+	for i := range stations {
+		s := &stations[i]
+		d := Haversine(tag.LocLat, tag.LocLon, s.LocLat, s.LocLon)
+		if d < best {
+			best, nearest = d, s
 		}
 	}
-	if len(candidates) == 0 {
-		return nil, errors.New("no path found for the given tag id")
+	if nearest == nil {
+		return nil, errors.New("no station registered to land at")
 	}
-
-	min := candidates[0].Distance
-	nid := candidates[0].StationID
-	for _, path := range candidates {
-		if path.Distance < min {
-			min = path.Distance
-			nid = path.StationID
-		}
-	}
-	station, err = ru.ndr.FindsByID(nid)
-	if err != nil {
-		return nil, err
-	}
-	return station, nil
+	return nearest, nil
 }
 
 func (ru *registUsecase) GetPaths() ([]model.Path, error) {
