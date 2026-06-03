@@ -52,6 +52,7 @@ type DeliveryRepo interface {
 	FindsByOrderNum(ordernum string) (dl model.Delivery, err error)
 	Create(*model.Delivery) error
 	Delete(*model.Delivery) error
+	DeleteByDroneID(droneid int) error
 }
 
 type PathRepo interface {

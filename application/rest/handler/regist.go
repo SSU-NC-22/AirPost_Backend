@@ -451,18 +451,20 @@ func (h *Handler) UnregistNode(c *gin.Context) {
 		return
 	}
 
-	// if drone, 해당 드론의 station_drone 항목도 같이 삭제
-	// if station, station_drone 항목이 존재할 경우 삭제 불가능
+	// 노드 타입 규칙이 두 가지다: seed 는 "station"/"drone"/"tag", 동적 IoT 등록(station_iot)은
+	// "STA"/"DRO-<stationid>". 그래서 문자열 정확비교 대신 "스테이션이면 가드, 그 외(드론 등)는
+	// 의존행 정리" 로 판별한다. deliveries 는 drone_id FK 에 ON DELETE CASCADE 가 없으므로 노드
+	// 삭제 전에 반드시 먼저 지워야 한다(드론이 아니면 no-op). station_drone 도 같이 정리한다.
 	node, _ := h.ru.GetNodeByID(id)
-	if node.Type == "DRO" {
-		sd := model.StationDrone{DroneID: id}
-		h.ru.UnregistStationDroneByDroneID(&sd)
-	} else if node.Type == "STA" {
+	if node.Type == "STA" || node.Type == "station" {
 		sdl, _ := h.ru.GetStationDroneByStationID(id)
 		if len(sdl) > 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "cannot delete station: drones are still registered to it"})
 			return
 		}
+	} else {
+		h.ru.UnregistStationDroneByDroneID(&model.StationDrone{DroneID: id})
+		h.ru.UnregistDeliveryByDroneID(id)
 	}
 	
 	err = h.ru.UnregistNode(node)

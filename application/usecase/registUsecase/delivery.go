@@ -25,6 +25,10 @@ func (ru *registUsecase) UnregistDelivery(d *model.Delivery) error {
 	return ru.dlr.Delete(d)
 }
 
+func (ru *registUsecase) UnregistDeliveryByDroneID(droneid int) error {
+	return ru.dlr.DeleteByDroneID(droneid)
+}
+
 /**************************************************************/
 /* path regist usecase                                        */
 /**************************************************************/

@@ -39,6 +39,7 @@ type RegistUsecase interface {
 	GetDeliveryByOrderNum(on string) (model.Delivery, error)
 	RegistDelivery(d *model.Delivery) error
 	UnregistDelivery(d *model.Delivery) error
+	UnregistDeliveryByDroneID(droneid int) error
 
 	GetShortestPathStation(tagid int) (station *model.Node, err error)
 	GetPaths() ([]model.Path, error)
