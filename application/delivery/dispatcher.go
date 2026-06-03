@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"sync"
+	"time"
 
 	deliverymqtt "github.com/eunnseo/AirPost/application/delivery/mqtt"
 	"github.com/eunnseo/AirPost/application/delivery/notify"
@@ -37,24 +38,41 @@ type deliveryLookup interface {
 // Dispatcher publishes delivery requests and handles inbound status updates. It
 // also acts as the "control tower": it tracks each in-flight mission's altitude
 // band and frees it on completion, keeping concurrent drones vertically separated.
+// busyStore persists which drones are mid-mission. It is the durable, TTL'd replacement for the old
+// in-memory busy map (see model.DroneBusy): DB-backed so reservations survive a restart, and TTL'd
+// so a sortie that never reports completion auto-frees its drone instead of wedging dispatch.
+type busyStore interface {
+	SetBusy(droneID int, orderNum string, until time.Time) error
+	FreeByOrder(orderNum string) error
+	IsBusy(droneID int) (bool, error)
+}
+
+// busyTTL bounds how long a drone stays reserved without a completion status — generously longer
+// than a real sortie, so a genuine long flight is never freed early, but a crashed/killed flight
+// (no completion) self-frees within this window.
+const busyTTL = 10 * time.Minute
+
 type Dispatcher struct {
 	publisher requestPublisher
 	lookup    deliveryLookup
 	smtp      notify.SMTPConfig
+	busyDB    busyStore // persistent + TTL'd reservations; nil -> fall back to the in-memory maps
 
 	mu         sync.Mutex
 	bands      map[string]int // order_id -> altitude band slot
 	used       []bool         // band slot -> in use
-	orderDrone map[string]int  // order_id -> drone id (to free the drone on landing)
-	busy       map[int]bool    // drone id -> in flight (skipped when assigning)
+	orderDrone map[string]int  // order_id -> drone id (in-memory fallback only)
+	busy       map[int]bool    // drone id -> in flight (in-memory fallback only)
 	notified   map[string]bool // order_id -> recipient already emailed
 }
 
-// NewDispatcher builds a Dispatcher from a publisher and a delivery lookup.
-func NewDispatcher(publisher requestPublisher, lookup deliveryLookup) *Dispatcher {
+// NewDispatcher builds a Dispatcher from a publisher and a delivery lookup. `busyDB` persists
+// in-flight reservations (DB-backed, TTL'd); pass nil to use the in-memory fallback (dev/tests).
+func NewDispatcher(publisher requestPublisher, lookup deliveryLookup, busyDB busyStore) *Dispatcher {
 	return &Dispatcher{
 		publisher:  publisher,
 		lookup:     lookup,
+		busyDB:     busyDB,
 		smtp:       notify.LoadSMTPConfig(),
 		bands:      make(map[string]int),
 		orderDrone: make(map[string]int),
@@ -92,9 +110,15 @@ func (d *Dispatcher) Dispatch(delivery *model.Delivery, takeoff, pickup, landing
 	return nil
 }
 
-// markBusy records the drone flying an order so it is not assigned to another
-// order until it lands.
+// markBusy records the drone flying an order so it is not assigned to another order until it lands
+// (or the TTL expires). Backed by the DB when available, else the in-memory fallback.
 func (d *Dispatcher) markBusy(orderID string, droneID int) {
+	if d.busyDB != nil {
+		if err := d.busyDB.SetBusy(droneID, orderID, time.Now().Add(busyTTL)); err != nil {
+			log.Printf("dispatch: markBusy(drone %d, %s) failed: %v", droneID, orderID, err)
+		}
+		return
+	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.orderDrone[orderID] = droneID
@@ -103,6 +127,12 @@ func (d *Dispatcher) markBusy(orderID string, droneID int) {
 
 // freeDrone releases the drone held by an order so the fleet can reuse it.
 func (d *Dispatcher) freeDrone(orderID string) {
+	if d.busyDB != nil {
+		if err := d.busyDB.FreeByOrder(orderID); err != nil {
+			log.Printf("dispatch: freeDrone(%s) failed: %v", orderID, err)
+		}
+		return
+	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	if id, ok := d.orderDrone[orderID]; ok {
@@ -111,11 +141,20 @@ func (d *Dispatcher) freeDrone(orderID string) {
 	}
 }
 
-// IsDroneBusy reports whether a drone is currently flying a mission. A nil
-// dispatcher (no broker in dev/tests) reports everything idle.
+// IsDroneBusy reports whether a drone is currently flying a mission (unexpired reservation). A nil
+// dispatcher (no broker in dev/tests) reports everything idle. A DB error is treated as "not busy"
+// (fail-open) so a transient DB hiccup never wedges the whole fleet — it is logged instead.
 func (d *Dispatcher) IsDroneBusy(droneID int) bool {
 	if d == nil {
 		return false
+	}
+	if d.busyDB != nil {
+		busy, err := d.busyDB.IsBusy(droneID)
+		if err != nil {
+			log.Printf("dispatch: IsBusy(drone %d) failed, treating as free: %v", droneID, err)
+			return false
+		}
+		return busy
 	}
 	d.mu.Lock()
 	defer d.mu.Unlock()

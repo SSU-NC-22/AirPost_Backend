@@ -178,7 +178,7 @@ func setupDelivery(ru usecase.RegistUsecase) *delivery.Dispatcher {
 		return nil
 	}
 
-	dispatcher := delivery.NewDispatcher(client, ru)
+	dispatcher := delivery.NewDispatcher(client, ru, sql.NewBusyRepo())
 	if err := client.SubscribeStatus(dispatcher.HandleStatus); err != nil {
 		log.Printf("delivery: status subscription failed: %v", err)
 	}

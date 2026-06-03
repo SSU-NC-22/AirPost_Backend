@@ -30,6 +30,7 @@ func Setup() {
 		&model.Sink{}, &model.Node{},
 		&model.SensorValue{}, &model.Logic{},
 		&model.Delivery{}, &model.Path{}, &model.StationDrone{},
+		&model.DroneBusy{},
 	); err != nil {
 		panic(errors.New("DB migration failed: " + err.Error()))
 	}
