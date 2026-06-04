@@ -4,10 +4,12 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/eunnseo/AirPost/application/dataService/sql"
 	"github.com/eunnseo/AirPost/application/delivery"
 	deliverymqtt "github.com/eunnseo/AirPost/application/delivery/mqtt"
+	"github.com/eunnseo/AirPost/application/fleet"
 	"github.com/eunnseo/AirPost/application/docs"
 	"github.com/eunnseo/AirPost/application/domain/model"
 	"github.com/eunnseo/AirPost/application/domain/repository"
@@ -181,6 +183,25 @@ func setupDelivery(ru usecase.RegistUsecase) *delivery.Dispatcher {
 	dispatcher := delivery.NewDispatcher(client, ru, sql.NewBusyRepo())
 	if err := client.SubscribeStatus(dispatcher.HandleStatus); err != nil {
 		log.Printf("delivery: status subscription failed: %v", err)
+	}
+
+	// Control tower: ingest every drone's live position and continuously deconflict the fleet,
+	// holding a drone (command/downlink/Hold/<id>) when two get too close and clearing it once the
+	// airspace is free. Complements the dispatcher's altitude-band assignment.
+	monitor := fleet.NewMonitor()
+	if err := client.SubscribeFleetTelemetry(func(id int, lat, lon, alt float64) {
+		monitor.Update(id, lat, lon, alt, time.Now())
+	}); err != nil {
+		log.Printf("fleet: telemetry subscription failed: %v", err)
+	} else {
+		monitor.Run(time.Second, time.Now, func(a fleet.Advisory) {
+			if err := client.PublishHold(a.DroneID, a.Hold); err != nil {
+				log.Printf("fleet: hold advisory to drone %d failed: %v", a.DroneID, err)
+				return
+			}
+			log.Printf("fleet: drone %d %s (%s)", a.DroneID, map[bool]string{true: "HOLD", false: "CLEAR"}[a.Hold], a.Reason)
+		})
+		log.Printf("fleet: control-tower deconfliction active")
 	}
 	return dispatcher
 }
